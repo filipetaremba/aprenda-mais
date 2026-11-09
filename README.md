@@ -1,2 +1,2 @@
 # aprenda-mais
-Aplicaom que reune varios exercicios de exame de admissao para ajudar estudantes a se prepar para o exae de admissao.. sua ajuda ira fortalecer
+Aplicação que reúne vários exercícios de exames de admissão, com o objetivo de ajudar os estudantes a prepararem-se para os exames de admissão. A sua contribuição irá fortalecer este projeto e ajudar mais estudantes a alcançarem os seus objetivos.
