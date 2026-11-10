@@ -1,0 +1,6 @@
+# Ficheiros temporários de edição/importação
+~$*.xlsx
+~$*.xls
+*.tmp
+*.bak
+.DS_Store

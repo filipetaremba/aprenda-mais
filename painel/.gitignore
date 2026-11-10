@@ -1,0 +1,19 @@
+# Dependências e builds web
+node_modules/
+dist/
+build/
+.next/
+.nuxt/
+.output/
+coverage/
+.vite/
+
+# Configuração local e segredos
+.env
+.env.*
+!.env.example
+
+# Logs e ficheiros do sistema
+*.log
+.DS_Store
+Thumbs.db

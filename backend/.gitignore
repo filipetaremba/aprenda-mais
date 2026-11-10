@@ -1,0 +1,13 @@
+# Segredos locais: manter apenas .env.example no Git
+.env
+.env.*
+!.env.example
+
+# Dependências e artefactos de desenvolvimento
+node_modules/
+dist/
+coverage/
+.cache/
+.supabase/
+supabase/.temp/
+*.log
