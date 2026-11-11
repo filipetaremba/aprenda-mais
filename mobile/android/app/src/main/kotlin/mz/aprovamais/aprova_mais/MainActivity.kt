@@ -1,4 +1,4 @@
-package com.example.aprenda_mais
+package mz.aprovamais.aprova_mais
 
 import io.flutter.embedding.android.FlutterActivity
 

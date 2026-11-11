@@ -1,30 +1,38 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:aprenda_mais/main.dart';
+import 'package:aprova_mais/app/app.dart';
+import 'package:aprova_mais/app/home_shell.dart';
+import 'package:aprova_mais/features/loja/presentation/pagamento_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Splash mostra a marca e avança para as boas-vindas', (tester) async {
+    await tester.pumpWidget(const AprovaApp());
+    expect(find.text('Prepara-te para a admissão'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    expect(find.text('Saltar'), findsOneWidget);
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('Tabs do início em ecrã pequeno (360×640) sem transbordo', (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(const MaterialApp(home: HomeShell()));
+    expect(find.text('Vamos estudar?'), findsOneWidget);
+    for (final tab in ['Simulados', 'Progresso', 'Perfil']) {
+      await tester.tap(find.text(tab).last);
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('Modo escuro'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test('Detecção da carteira pelo prefixo', () {
+    expect(carteiraDoNumero('84 123 4567'), Carteira.mpesa);
+    expect(carteiraDoNumero('85'), Carteira.mpesa);
+    expect(carteiraDoNumero('86 000 0000'), Carteira.emola);
+    expect(carteiraDoNumero('87'), Carteira.emola);
+    expect(carteiraDoNumero('82 123 4567'), isNull);
+    expect(carteiraDoNumero('8'), isNull);
   });
 }
