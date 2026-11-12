@@ -1,9 +1,16 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import dotenv from 'dotenv';
 
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+/** Pasta do backend (a que tem o package.json): funciona em src/ (dev) e em dist/src/ (produção). */
+function pastaRaiz(): string {
+  let d = __dirname;
+  while (!fs.existsSync(path.join(d, 'package.json')) && path.dirname(d) !== d) d = path.dirname(d);
+  return d;
+}
 
-const RAIZ = path.resolve(__dirname, '..');
+const RAIZ = pastaRaiz();
+dotenv.config({ path: path.join(RAIZ, '.env') });
 
 function obrigatorio(nome: string): string {
   const v = process.env[nome];
