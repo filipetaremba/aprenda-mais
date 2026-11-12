@@ -15,7 +15,7 @@
     <tbody>
     <% for (const p of linhas) { const u = p.versoes[0]; %>
       <tr>
-        <td><code><%= p.codigo %></code><br><small><%= p.nome %></small></td>
+        <td><code><%= p.codigo %></code><br><small><%= p.nome %><% if (p.fonte) { %> · questões de <code><%= p.fonte %></code><% } %></small></td>
         <td class="num"><%= p.gratis %></td>
         <td class="num"><%= p.pagas %></td>
         <td>

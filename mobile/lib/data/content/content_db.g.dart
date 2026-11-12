@@ -1183,6 +1183,17 @@ class $ProvasTable extends Provas with TableInfo<$ProvasTable, ProvaRow> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _questoesDeMeta = const VerificationMeta(
+    'questoesDe',
+  );
+  @override
+  late final GeneratedColumn<String> questoesDe = GeneratedColumn<String>(
+    'questoes_de',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     codigo,
@@ -1192,6 +1203,7 @@ class $ProvasTable extends Provas with TableInfo<$ProvasTable, ProvaRow> {
     nome,
     duracaoMin,
     numQuestoes,
+    questoesDe,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1258,6 +1270,12 @@ class $ProvasTable extends Provas with TableInfo<$ProvasTable, ProvaRow> {
         ),
       );
     }
+    if (data.containsKey('questoes_de')) {
+      context.handle(
+        _questoesDeMeta,
+        questoesDe.isAcceptableOrUnknown(data['questoes_de']!, _questoesDeMeta),
+      );
+    }
     return context;
   }
 
@@ -1295,6 +1313,10 @@ class $ProvasTable extends Provas with TableInfo<$ProvasTable, ProvaRow> {
         DriftSqlType.int,
         data['${effectivePrefix}num_questoes'],
       ),
+      questoesDe: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}questoes_de'],
+      ),
     );
   }
 
@@ -1312,6 +1334,9 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
   final String nome;
   final int? duracaoMin;
   final int? numQuestoes;
+
+  /// Prova sem questões próprias: as questões são as desta (mesma disciplina, outro exame)
+  final String? questoesDe;
   const ProvaRow({
     required this.codigo,
     required this.grupoExame,
@@ -1320,6 +1345,7 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
     required this.nome,
     this.duracaoMin,
     this.numQuestoes,
+    this.questoesDe,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1336,6 +1362,9 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
     }
     if (!nullToAbsent || numQuestoes != null) {
       map['num_questoes'] = Variable<int>(numQuestoes);
+    }
+    if (!nullToAbsent || questoesDe != null) {
+      map['questoes_de'] = Variable<String>(questoesDe);
     }
     return map;
   }
@@ -1355,6 +1384,9 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
       numQuestoes: numQuestoes == null && nullToAbsent
           ? const Value.absent()
           : Value(numQuestoes),
+      questoesDe: questoesDe == null && nullToAbsent
+          ? const Value.absent()
+          : Value(questoesDe),
     );
   }
 
@@ -1371,6 +1403,7 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
       nome: serializer.fromJson<String>(json['nome']),
       duracaoMin: serializer.fromJson<int?>(json['duracaoMin']),
       numQuestoes: serializer.fromJson<int?>(json['numQuestoes']),
+      questoesDe: serializer.fromJson<String?>(json['questoesDe']),
     );
   }
   @override
@@ -1384,6 +1417,7 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
       'nome': serializer.toJson<String>(nome),
       'duracaoMin': serializer.toJson<int?>(duracaoMin),
       'numQuestoes': serializer.toJson<int?>(numQuestoes),
+      'questoesDe': serializer.toJson<String?>(questoesDe),
     };
   }
 
@@ -1395,6 +1429,7 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
     String? nome,
     Value<int?> duracaoMin = const Value.absent(),
     Value<int?> numQuestoes = const Value.absent(),
+    Value<String?> questoesDe = const Value.absent(),
   }) => ProvaRow(
     codigo: codigo ?? this.codigo,
     grupoExame: grupoExame ?? this.grupoExame,
@@ -1403,6 +1438,7 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
     nome: nome ?? this.nome,
     duracaoMin: duracaoMin.present ? duracaoMin.value : this.duracaoMin,
     numQuestoes: numQuestoes.present ? numQuestoes.value : this.numQuestoes,
+    questoesDe: questoesDe.present ? questoesDe.value : this.questoesDe,
   );
   ProvaRow copyWithCompanion(ProvasCompanion data) {
     return ProvaRow(
@@ -1421,6 +1457,9 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
       numQuestoes: data.numQuestoes.present
           ? data.numQuestoes.value
           : this.numQuestoes,
+      questoesDe: data.questoesDe.present
+          ? data.questoesDe.value
+          : this.questoesDe,
     );
   }
 
@@ -1433,7 +1472,8 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
           ..write('variante: $variante, ')
           ..write('nome: $nome, ')
           ..write('duracaoMin: $duracaoMin, ')
-          ..write('numQuestoes: $numQuestoes')
+          ..write('numQuestoes: $numQuestoes, ')
+          ..write('questoesDe: $questoesDe')
           ..write(')'))
         .toString();
   }
@@ -1447,6 +1487,7 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
     nome,
     duracaoMin,
     numQuestoes,
+    questoesDe,
   );
   @override
   bool operator ==(Object other) =>
@@ -1458,7 +1499,8 @@ class ProvaRow extends DataClass implements Insertable<ProvaRow> {
           other.variante == this.variante &&
           other.nome == this.nome &&
           other.duracaoMin == this.duracaoMin &&
-          other.numQuestoes == this.numQuestoes);
+          other.numQuestoes == this.numQuestoes &&
+          other.questoesDe == this.questoesDe);
 }
 
 class ProvasCompanion extends UpdateCompanion<ProvaRow> {
@@ -1469,6 +1511,7 @@ class ProvasCompanion extends UpdateCompanion<ProvaRow> {
   final Value<String> nome;
   final Value<int?> duracaoMin;
   final Value<int?> numQuestoes;
+  final Value<String?> questoesDe;
   final Value<int> rowid;
   const ProvasCompanion({
     this.codigo = const Value.absent(),
@@ -1478,6 +1521,7 @@ class ProvasCompanion extends UpdateCompanion<ProvaRow> {
     this.nome = const Value.absent(),
     this.duracaoMin = const Value.absent(),
     this.numQuestoes = const Value.absent(),
+    this.questoesDe = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProvasCompanion.insert({
@@ -1488,6 +1532,7 @@ class ProvasCompanion extends UpdateCompanion<ProvaRow> {
     required String nome,
     this.duracaoMin = const Value.absent(),
     this.numQuestoes = const Value.absent(),
+    this.questoesDe = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : codigo = Value(codigo),
        grupoExame = Value(grupoExame),
@@ -1501,6 +1546,7 @@ class ProvasCompanion extends UpdateCompanion<ProvaRow> {
     Expression<String>? nome,
     Expression<int>? duracaoMin,
     Expression<int>? numQuestoes,
+    Expression<String>? questoesDe,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1511,6 +1557,7 @@ class ProvasCompanion extends UpdateCompanion<ProvaRow> {
       if (nome != null) 'nome': nome,
       if (duracaoMin != null) 'duracao_min': duracaoMin,
       if (numQuestoes != null) 'num_questoes': numQuestoes,
+      if (questoesDe != null) 'questoes_de': questoesDe,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1523,6 +1570,7 @@ class ProvasCompanion extends UpdateCompanion<ProvaRow> {
     Value<String>? nome,
     Value<int?>? duracaoMin,
     Value<int?>? numQuestoes,
+    Value<String?>? questoesDe,
     Value<int>? rowid,
   }) {
     return ProvasCompanion(
@@ -1533,6 +1581,7 @@ class ProvasCompanion extends UpdateCompanion<ProvaRow> {
       nome: nome ?? this.nome,
       duracaoMin: duracaoMin ?? this.duracaoMin,
       numQuestoes: numQuestoes ?? this.numQuestoes,
+      questoesDe: questoesDe ?? this.questoesDe,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1561,6 +1610,9 @@ class ProvasCompanion extends UpdateCompanion<ProvaRow> {
     if (numQuestoes.present) {
       map['num_questoes'] = Variable<int>(numQuestoes.value);
     }
+    if (questoesDe.present) {
+      map['questoes_de'] = Variable<String>(questoesDe.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1577,6 +1629,7 @@ class ProvasCompanion extends UpdateCompanion<ProvaRow> {
           ..write('nome: $nome, ')
           ..write('duracaoMin: $duracaoMin, ')
           ..write('numQuestoes: $numQuestoes, ')
+          ..write('questoesDe: $questoesDe, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6722,6 +6775,7 @@ typedef $$ProvasTableCreateCompanionBuilder =
       required String nome,
       Value<int?> duracaoMin,
       Value<int?> numQuestoes,
+      Value<String?> questoesDe,
       Value<int> rowid,
     });
 typedef $$ProvasTableUpdateCompanionBuilder =
@@ -6733,6 +6787,7 @@ typedef $$ProvasTableUpdateCompanionBuilder =
       Value<String> nome,
       Value<int?> duracaoMin,
       Value<int?> numQuestoes,
+      Value<String?> questoesDe,
       Value<int> rowid,
     });
 
@@ -6776,6 +6831,11 @@ class $$ProvasTableFilterComposer extends Composer<_$ContentDb, $ProvasTable> {
 
   ColumnFilters<int> get numQuestoes => $composableBuilder(
     column: $table.numQuestoes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get questoesDe => $composableBuilder(
+    column: $table.questoesDe,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -6823,6 +6883,11 @@ class $$ProvasTableOrderingComposer
     column: $table.numQuestoes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get questoesDe => $composableBuilder(
+    column: $table.questoesDe,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProvasTableAnnotationComposer
@@ -6862,6 +6927,11 @@ class $$ProvasTableAnnotationComposer
     column: $table.numQuestoes,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get questoesDe => $composableBuilder(
+    column: $table.questoesDe,
+    builder: (column) => column,
+  );
 }
 
 class $$ProvasTableTableManager
@@ -6899,6 +6969,7 @@ class $$ProvasTableTableManager
                 Value<String> nome = const Value.absent(),
                 Value<int?> duracaoMin = const Value.absent(),
                 Value<int?> numQuestoes = const Value.absent(),
+                Value<String?> questoesDe = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProvasCompanion(
                 codigo: codigo,
@@ -6908,6 +6979,7 @@ class $$ProvasTableTableManager
                 nome: nome,
                 duracaoMin: duracaoMin,
                 numQuestoes: numQuestoes,
+                questoesDe: questoesDe,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -6919,6 +6991,7 @@ class $$ProvasTableTableManager
                 required String nome,
                 Value<int?> duracaoMin = const Value.absent(),
                 Value<int?> numQuestoes = const Value.absent(),
+                Value<String?> questoesDe = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProvasCompanion.insert(
                 codigo: codigo,
@@ -6928,6 +7001,7 @@ class $$ProvasTableTableManager
                 nome: nome,
                 duracaoMin: duracaoMin,
                 numQuestoes: numQuestoes,
+                questoesDe: questoesDe,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -42,6 +42,13 @@ void main() {
     expect(ofertas.length, greaterThan(100));
     final comQuestoes = await repo.provasComQuestoes();
     expect(comQuestoes, contains('UEM-MAT2'));
+    // Todos os cursos que vêm na app têm pelo menos um nível aberto
+    final semNivel = [for (final o in ofertas) if (!o.provas.any((p) => comQuestoes.contains(p.codigo))) o.codigo];
+    expect(semNivel, isEmpty);
+    // Provas partilhadas avisam de onde vêm as perguntas
+    final upBio = await repo.prova('UP-BIO');
+    expect(upBio!.partilhada, isTrue);
+    expect(upBio.avisoPartilha, contains('UEM'));
     // Só níveis grátis no APK
     for (final prova in comQuestoes) {
       expect((await repo.questoesPorNivel(prova)).keys.every((n) => n <= 2), isTrue, reason: prova);

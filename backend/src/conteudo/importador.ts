@@ -10,6 +10,7 @@ import path from 'node:path';
 import Ajv2020, { type ErrorObject } from 'ajv/dist/2020';
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { config, dirImagens } from '../config';
+import { optimizarImagem } from './imagens';
 import {
   NUM_NIVEIS,
   paraCodigo,
@@ -557,7 +558,9 @@ export async function gravar(db: PrismaClient, plano: Plano): Promise<ResultadoG
   for (const [nome, origem] of Object.entries(plano.imagens)) {
     const destino = path.join(dirImagens(), path.basename(nome));
     if (path.resolve(origem) !== path.resolve(destino)) {
-      fs.copyFileSync(origem, destino);
+      // Guardam-se já compactas (o original nos seeds fica intacto)
+      const original = fs.readFileSync(origem);
+      fs.writeFileSync(destino, /\.png$/i.test(destino) ? await optimizarImagem(original) : original);
       imagens++;
     }
   }

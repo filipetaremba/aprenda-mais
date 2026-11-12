@@ -91,6 +91,21 @@ class NiveisScreen extends ConsumerWidget {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
                   children: [
+                    if (d.prova.avisoPartilha != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: InfoBanner(
+                          color: AppColors.accentLight,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('ℹ️', style: TextStyle(fontSize: 16)),
+                              const SizedBox(width: 10),
+                              Expanded(child: Text(d.prova.avisoPartilha!)),
+                            ],
+                          ),
+                        ),
+                      ),
                     if (!d.temLicenca)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),

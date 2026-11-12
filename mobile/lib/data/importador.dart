@@ -61,6 +61,7 @@ class ImportadorConteudo {
               variante: Value(p['variante']),
               duracaoMin: Value(p['duracao_min']),
               numQuestoes: Value(p['num_questoes']),
+              questoesDe: Value(p['questoes_de']),
             ),
         ]);
         b.insertAllOnConflictUpdate(db.ofertas, [

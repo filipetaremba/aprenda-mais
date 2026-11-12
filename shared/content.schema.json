@@ -177,7 +177,8 @@
         "duracao_min": { "type": ["integer", "null"], "minimum": 1 },
         "num_questoes": { "type": ["integer", "null"], "minimum": 1 },
         "num_alternativas": { "type": ["integer", "null"], "minimum": 2, "maximum": 5 },
-        "nota": { "type": "string" }
+        "nota": { "type": "string" },
+        "questoes_de": { "type": ["string", "null"], "description": "Prova sem questões próprias: as questões vêm desta prova (mesma disciplina)." }
       }
     },
 

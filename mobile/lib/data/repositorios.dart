@@ -13,13 +13,23 @@ import 'user/user_db.dart';
 // ───────────── Modelos de leitura ─────────────
 
 class ProvaInfo {
-  const ProvaInfo({required this.row, required this.disciplinaNome, this.disciplinaIcone, required this.instituicoes});
+  const ProvaInfo({required this.row, required this.disciplinaNome, this.disciplinaIcone, required this.instituicoes, this.instituicoesDaFonte});
   final ProvaRow row;
   final String disciplinaNome;
   final String? disciplinaIcone;
 
   /// Siglas das instituições do grupo de exame (ex.: UEM · UniZambeze)
   final List<String> instituicoes;
+
+  /// Prova partilhada: siglas do exame de onde vêm as perguntas (null = perguntas próprias)
+  final List<String>? instituicoesDaFonte;
+
+  bool get partilhada => row.questoesDe != null;
+
+  /// Aviso honesto para o estudante quando as perguntas são de outro exame.
+  String? get avisoPartilha => instituicoesDaFonte == null
+      ? null
+      : 'Ainda não temos exames desta prova: praticas com perguntas de $disciplinaNome dos exames ${instituicoesDaFonte!.join(' / ')}.';
 
   String get codigo => row.codigo;
   String get nome => row.nome;
@@ -131,6 +141,10 @@ class ConteudoRepo {
   Future<List<ProvaInfo>> _provasInfo(Iterable<ProvaRow> rows) async {
     final disc = {for (final d in await db.select(db.disciplinas).get()) d.codigo: d};
     final grupos = await _instituicoesPorGrupo();
+    final fontes = {
+      for (final f in await (db.select(db.provas)..where((t) => t.codigo.isIn(rows.map((r) => r.questoesDe).whereType<String>()))).get())
+        f.codigo: f.grupoExame,
+    };
     return [
       for (final r in rows)
         ProvaInfo(
@@ -138,6 +152,7 @@ class ConteudoRepo {
           disciplinaNome: disc[r.disciplina]?.nome ?? r.disciplina,
           disciplinaIcone: disc[r.disciplina]?.icone,
           instituicoes: grupos[r.grupoExame] ?? [r.grupoExame],
+          instituicoesDaFonte: r.questoesDe == null ? null : grupos[fontes[r.questoesDe]] ?? [r.questoesDe!],
         ),
     ];
   }

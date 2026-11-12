@@ -10,7 +10,7 @@ export function pacotesRouter() {
 
   r.get('/', async (_req, res) => {
     const [provas, publicadas, pacotes] = await Promise.all([
-      prisma.prova.findMany({ orderBy: { codigo: 'asc' }, select: { codigo: true, nome: true } }),
+      prisma.prova.findMany({ orderBy: { codigo: 'asc' }, select: { codigo: true, nome: true, questoes_de: true } }),
       prisma.questaoProva.groupBy({ by: ['prova', 'nivel'], where: { q: { estado: 'publicada' } }, _count: { _all: true } }),
       prisma.pacote.findMany({ orderBy: [{ prova: 'asc' }, { versao: 'desc' }] }),
     ]);
@@ -24,7 +24,11 @@ export function pacotesRouter() {
     const historico: Record<string, typeof pacotes> = {};
     for (const p of pacotes) (historico[p.prova] ??= []).push(p);
     res.render('pacotes', {
-      linhas: provas.map((p) => ({ ...p, ...(contagem[p.codigo] ?? { gratis: 0, pagas: 0 }), versoes: historico[p.codigo] ?? [] })),
+      linhas: provas.map((p) => {
+        // Sem questões próprias: conta as da prova doadora (questoes_de)
+        const fonte = contagem[p.codigo] ? p.codigo : (p.questoes_de ?? p.codigo);
+        return { ...p, fonte: fonte === p.codigo ? null : fonte, ...(contagem[fonte] ?? { gratis: 0, pagas: 0 }), versoes: historico[p.codigo] ?? [] };
+      }),
       niveisGratis: config.niveisGratis,
     });
   });

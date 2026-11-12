@@ -17,7 +17,7 @@ async function main() {
   const precoNiveis = arg('--niveis', 59);
   const precoSimulados = arg('--simulados', 49);
   const provas = await prisma.prova.findMany({
-    where: { questoes: { some: {} } },
+    where: { OR: [{ questoes: { some: {} } }, { questoes_de: { not: null } }] },
     include: { grupo: true },
     orderBy: { codigo: 'asc' },
   });

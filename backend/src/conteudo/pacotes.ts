@@ -13,6 +13,7 @@ import AdmZip from 'adm-zip';
 import type { PrismaClient } from '@prisma/client';
 import { config, dirImagens, dirPacotes } from '../config';
 import { listaJson, NUM_NIVEIS } from '../dominio';
+import { provaFonte } from './provas';
 
 export const FORMATO = 1;
 
@@ -27,8 +28,10 @@ type Filtro = (nivel: number) => boolean;
 
 /** { prova, textos_base, questoes } (= $defs/ficheiro_questoes) e as imagens usadas. */
 async function ficheiroDaProva(db: PrismaClient, prova: string, incluirNivel: Filtro, estados: string[] = ['publicada']) {
+  // Prova sem questões próprias usa as da prova doadora (mesma disciplina); o ficheiro sai com o código desta prova
+  const fonte = await provaFonte(db, prova);
   const ligacoes = await db.questaoProva.findMany({
-    where: { prova, nivel: { not: null }, q: { estado: { in: estados } } },
+    where: { prova: fonte, nivel: { not: null }, q: { estado: { in: estados } } },
     include: { q: { include: { alternativas: { orderBy: { ordem: 'asc' } }, texto: true } } },
     orderBy: [{ nivel: 'asc' }, { questao: 'asc' }],
   });
@@ -164,13 +167,23 @@ export async function exportarApp(db: PrismaClient, saida: string, opcoes: { inc
   const exames = [];
   const imagens = new Set<string>();
   const niveis = [];
+  const comNivelAberto = new Set<string>();
+  const fontes = new Map<string, string>();
   for (const p of provas) {
     niveis.push(...(await niveisDaProva(db, p.codigo)));
     const { ficheiro, imagens: imgs } = await ficheiroDaProva(db, p.codigo, gratis, estados);
-    if (ficheiro.questoes.length) exames.push(ficheiro);
+    if (ficheiro.questoes.length) {
+      exames.push(ficheiro);
+      comNivelAberto.add(p.codigo);
+    }
     imgs.forEach((i) => imagens.add(i));
+    const fonte = await provaFonte(db, p.codigo);
+    if (fonte !== p.codigo) fontes.set(p.codigo, fonte);
   }
   verificarImagens(imagens);
+  // Na app só entram cursos com pelo menos um nível aberto (alguma prova com questões grátis)
+  const ofertasApp = ofertas.filter((o) => o.provas.some((x) => comNivelAberto.has(x.prova)));
+  const excluidas = ofertas.filter((o) => !ofertasApp.includes(o)).map((o) => o.codigo);
 
   const conteudo = {
     formato: FORMATO,
@@ -193,8 +206,9 @@ export async function exportarApp(db: PrismaClient, saida: string, opcoes: { inc
         duracao_min: p.duracao_min,
         num_questoes: p.num_questoes,
         num_alternativas: p.num_alternativas,
+        ...(fontes.has(p.codigo) && { questoes_de: fontes.get(p.codigo) }),
       })),
-      cursos: ofertas.map((o) => ({
+      cursos: ofertasApp.map((o) => ({
         codigo: o.codigo,
         slug: o.slug,
         instituicao: o.instituicao,
@@ -235,7 +249,9 @@ export async function exportarApp(db: PrismaClient, saida: string, opcoes: { inc
   return {
     versao: conteudo.versao,
     provas: provas.length,
-    ofertas: ofertas.length,
+    ofertas: ofertasApp.length,
+    ofertasExcluidas: excluidas,
+    provasPartilhadas: Object.fromEntries(fontes),
     produtos: produtos.length,
     questoes: exames.reduce((s, e) => s + e.questoes.length, 0),
     imagens: imagens.size,

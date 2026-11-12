@@ -78,6 +78,8 @@ model Prova {
   num_questoes     Int?
   num_alternativas Int?
   nota             String?
+  /// Prova sem questões próprias: usa as desta prova (mesma disciplina). As próprias têm sempre prioridade.
+  questoes_de      String?
   grupo            GrupoExame     @relation(fields: [grupo_exame], references: [codigo])
   disc             Disciplina     @relation(fields: [disciplina], references: [codigo])
   niveis           Nivel[]

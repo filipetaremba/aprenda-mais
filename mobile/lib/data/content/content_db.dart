@@ -53,6 +53,8 @@ class Provas extends Table {
   TextColumn get nome => text()();
   IntColumn get duracaoMin => integer().nullable()();
   IntColumn get numQuestoes => integer().nullable()();
+  /// Prova sem questões próprias: as questões são as desta (mesma disciplina, outro exame)
+  TextColumn get questoesDe => text().nullable()();
   @override
   Set<Column> get primaryKey => {codigo};
 }
@@ -222,7 +224,15 @@ class ContentDb extends _$ContentDb {
   factory ContentDb.abrir() => ContentDb(driftDatabase(name: 'content'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, de, para) async {
+          // v2: provas partilhadas (questoes_de)
+          if (de < 2) await m.addColumn(provas, provas.questoesDe);
+        },
+      );
 
   Future<String?> lerMeta(String chave) async =>
       (await (select(meta)..where((m) => m.chave.equals(chave))).getSingleOrNull())?.valor;
