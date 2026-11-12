@@ -4,6 +4,7 @@
  *
  *   npm run exportar:app                       (por omissão ../mobile/assets/content)
  *   npm run exportar:app -- --saida <pasta>
+ *   npm run exportar:app -- --incluir-revistas   (DESENVOLVIMENTO: inclui questões ainda não publicadas)
  */
 import path from 'node:path';
 import { config } from '../src/config';
@@ -13,7 +14,9 @@ import { exportarApp } from '../src/conteudo/pacotes';
 async function main() {
   const i = process.argv.indexOf('--saida');
   const saida = path.resolve(i > 0 ? process.argv[i + 1] : path.join(config.raiz, '..', 'mobile', 'assets', 'content'));
-  const r = await exportarApp(prisma, saida);
+  const incluirRevistas = process.argv.includes('--incluir-revistas');
+  const r = await exportarApp(prisma, saida, { incluirRevistas });
+  if (incluirRevistas) console.log('⚠ Inclui questões em estado "revista" (só para desenvolvimento).');
   console.log(`✔ Conteúdo da app v${r.versao} em ${saida}`);
   console.log(`  ${r.provas} provas, ${r.ofertas} ofertas, ${r.produtos} produtos, ${r.questoes} questões grátis, ${r.imagens} imagens`);
   for (const [prova, n] of Object.entries(r.porProva)) console.log(`  ${prova.padEnd(10)} ${n}`);

@@ -42,7 +42,8 @@
           "required": ["nota_minima_padrao", "niveis_gratis"],
           "properties": {
             "nota_minima_padrao": { "type": "integer", "minimum": 0, "maximum": 100 },
-            "niveis_gratis": { "type": "integer", "minimum": 0, "maximum": 10 }
+            "niveis_gratis": { "type": "integer", "minimum": 0, "maximum": 10 },
+            "inclui_revistas": { "type": "boolean", "description": "true = exportado para desenvolvimento com questões não publicadas" }
           }
         },
         "catalogo": { "$ref": "#/$defs/catalogo" },

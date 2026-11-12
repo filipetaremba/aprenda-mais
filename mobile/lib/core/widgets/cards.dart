@@ -8,7 +8,7 @@ class AppCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
-    this.color = Colors.white,
+    this.color,
     this.radius = AppRadius.card,
     this.border,
     this.onTap,
@@ -17,7 +17,8 @@ class AppCard extends StatelessWidget {
 
   final Widget child;
   final EdgeInsetsGeometry padding;
-  final Color color;
+  /// null = superfície do tema
+  final Color? color;
   final double radius;
   final BoxBorder? border;
   final VoidCallback? onTap;
@@ -28,7 +29,7 @@ class AppCard extends StatelessWidget {
     final shape = BorderRadius.circular(radius);
     return Container(
       decoration: BoxDecoration(
-        color: color,
+        color: color ?? AppColors.surface,
         borderRadius: shape,
         border: border,
         boxShadow: [
@@ -86,11 +87,11 @@ class InfoBanner extends StatelessWidget {
   const InfoBanner({
     super.key,
     required this.child,
-    this.color = AppColors.streak,
+    this.color,
   });
 
   final Widget child;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -98,11 +99,11 @@ class InfoBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: color,
+        color: color ?? AppColors.streak,
         borderRadius: BorderRadius.circular(AppRadius.button),
       ),
       child: DefaultTextStyle.merge(
-        style: const TextStyle(color: AppColors.ink, fontSize: 13, height: 1.5),
+        style: TextStyle(color: AppColors.ink, fontSize: 13, height: 1.5),
         child: child,
       ),
     );
@@ -114,13 +115,13 @@ class EmojiBox extends StatelessWidget {
   const EmojiBox(
     this.emoji, {
     super.key,
-    this.background = AppColors.primaryLight,
+    this.background,
     this.size = 44,
     this.fontSize = 22,
   });
 
   final String emoji;
-  final Color background;
+  final Color? background;
   final double size;
   final double fontSize;
 
@@ -131,7 +132,7 @@ class EmojiBox extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: background,
+        color: background ?? AppColors.primaryLight,
         borderRadius: BorderRadius.circular(size * 0.3),
       ),
       child: Text(emoji, style: TextStyle(fontSize: fontSize)),
@@ -153,7 +154,7 @@ class SectionTitle extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,

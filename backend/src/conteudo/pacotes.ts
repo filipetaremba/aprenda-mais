@@ -26,9 +26,9 @@ const versaoData = (d = new Date()) => Number(d.toISOString().slice(0, 16).repla
 type Filtro = (nivel: number) => boolean;
 
 /** { prova, textos_base, questoes } (= $defs/ficheiro_questoes) e as imagens usadas. */
-async function ficheiroDaProva(db: PrismaClient, prova: string, incluirNivel: Filtro) {
+async function ficheiroDaProva(db: PrismaClient, prova: string, incluirNivel: Filtro, estados: string[] = ['publicada']) {
   const ligacoes = await db.questaoProva.findMany({
-    where: { prova, nivel: { not: null }, q: { estado: 'publicada' } },
+    where: { prova, nivel: { not: null }, q: { estado: { in: estados } } },
     include: { q: { include: { alternativas: { orderBy: { ordem: 'asc' } }, texto: true } } },
     orderBy: [{ nivel: 'asc' }, { questao: 'asc' }],
   });
@@ -56,7 +56,7 @@ async function ficheiroDaProva(db: PrismaClient, prova: string, incluirNivel: Fi
       explicacao: { texto: q.explicacao, origem: q.explicacao_origem, revisto: q.explicacao_revista },
       dificuldade: q.dificuldade,
       nivel,
-      estado: 'publicada',
+      estado: q.estado,
     });
   }
   return { ficheiro: { prova, textos_base, questoes }, imagens };
@@ -145,7 +145,9 @@ export const caminhoPacote = (relativo: string) => path.join(dirPacotes(), relat
 
 // ───────────── Conteúdo grátis para o APK ─────────────
 
-export async function exportarApp(db: PrismaClient, saida: string) {
+/** `incluirRevistas`: só para desenvolvimento, inclui também as questões em estado "revista". */
+export async function exportarApp(db: PrismaClient, saida: string, opcoes: { incluirRevistas?: boolean } = {}) {
+  const estados = opcoes.incluirRevistas ? ['publicada', 'revista'] : ['publicada'];
   const gratis: Filtro = (n) => n >= 1 && n <= config.niveisGratis;
   const [grupos, instituicoes, disciplinas, temas, provas, cursos, ofertas, produtos] = await Promise.all([
     db.grupoExame.findMany({ orderBy: { codigo: 'asc' }, include: { instituicoes: { select: { codigo: true } } } }),
@@ -164,7 +166,7 @@ export async function exportarApp(db: PrismaClient, saida: string) {
   const niveis = [];
   for (const p of provas) {
     niveis.push(...(await niveisDaProva(db, p.codigo)));
-    const { ficheiro, imagens: imgs } = await ficheiroDaProva(db, p.codigo, gratis);
+    const { ficheiro, imagens: imgs } = await ficheiroDaProva(db, p.codigo, gratis, estados);
     if (ficheiro.questoes.length) exames.push(ficheiro);
     imgs.forEach((i) => imagens.add(i));
   }
@@ -175,7 +177,7 @@ export async function exportarApp(db: PrismaClient, saida: string) {
     tipo: 'conteudo_app',
     versao: versaoData(),
     gerado_em: new Date().toISOString(),
-    meta: { nota_minima_padrao: config.notaMinimaPadrao, niveis_gratis: config.niveisGratis },
+    meta: { nota_minima_padrao: config.notaMinimaPadrao, niveis_gratis: config.niveisGratis, inclui_revistas: !!opcoes.incluirRevistas },
     catalogo: {
       grupos_exame: grupos.map((g) => ({ codigo: g.codigo, nome: g.nome, instituicoes: g.instituicoes.map((i) => i.codigo), tem_gabarito: g.tem_gabarito })),
       instituicoes: instituicoes.map((i) => ({ codigo: i.codigo, sigla: i.sigla, nome: i.nome, grupo_exame: i.grupo_exame, provincias: listaJson(i.provincias) })),

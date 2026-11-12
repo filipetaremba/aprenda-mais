@@ -1,5 +1,6 @@
 export 'buttons.dart';
 export 'cards.dart';
+export 'conteudo.dart';
 export 'figures.dart';
 export 'misc_widgets.dart';
 export 'progress.dart';

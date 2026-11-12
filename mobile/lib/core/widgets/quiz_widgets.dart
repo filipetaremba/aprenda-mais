@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/app_colors.dart';
+import 'conteudo.dart';
 
 enum OptionState { normal, selected, correct, wrong }
 
@@ -13,10 +14,14 @@ class OptionTile extends StatelessWidget {
     this.state = OptionState.normal,
     this.onTap,
     this.compact = false,
+    this.imagem,
   });
 
   final String letter;
   final String text;
+
+  /// Imagem da alternativa (nome do ficheiro), quando a alternativa é uma figura.
+  final String? imagem;
   final OptionState state;
   final VoidCallback? onTap;
   final bool compact;
@@ -25,8 +30,8 @@ class OptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, border, badgeBg, badgeFg) = switch (state) {
       OptionState.normal => (
-          Colors.white,
-          const Color(0xFFEFF2F7),
+          AppColors.surface,
+          AppColors.escuro ? AppColors.border : const Color(0xFFEFF2F7),
           AppColors.primaryLight,
           AppColors.primary,
         ),
@@ -87,9 +92,19 @@ class OptionTile extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: MathText(
-                  text,
-                  style: const TextStyle(fontSize: 15, color: AppColors.ink),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (text.isNotEmpty) MathText(text, style: TextStyle(fontSize: 15, color: AppColors.ink)),
+                    if (imagem != null)
+                      Padding(
+                        padding: EdgeInsets.only(top: text.isEmpty ? 0 : 6),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: ColoredBox(color: Colors.white, child: ImagemConteudo(imagem!, altura: 90)),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
@@ -161,7 +176,7 @@ class QuestionCard extends StatelessWidget {
             const SizedBox(height: 14),
             Container(
               width: double.infinity,
-              height: 118,
+              constraints: const BoxConstraints(minHeight: 80, maxHeight: 240),
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -174,46 +189,6 @@ class QuestionCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Texto com fórmulas `$...$` misturadas.
-///
-/// Versão estática: as fórmulas aparecem em itálico/negrito. Na Fase 4 será
-/// trocado por `flutter_math_fork` para LaTeX completo.
-class MathText extends StatelessWidget {
-  const MathText(this.text, {super.key, this.style, this.textAlign});
-
-  final String text;
-  final TextStyle? style;
-  final TextAlign? textAlign;
-
-  @override
-  Widget build(BuildContext context) {
-    final parts = text.split(r'$');
-    final spans = <InlineSpan>[];
-    for (var i = 0; i < parts.length; i++) {
-      if (parts[i].isEmpty) continue;
-      final isMath = i.isOdd;
-      spans.add(TextSpan(
-        text: isMath ? _prettify(parts[i]) : parts[i],
-        style: isMath
-            ? const TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.w700)
-            : null,
-      ));
-    }
-    return Text.rich(
-      TextSpan(style: style, children: spans),
-      textAlign: textAlign,
-    );
-  }
-
-  static String _prettify(String latex) => latex
-      .replaceAll('^2', '²')
-      .replaceAll('^3', '³')
-      .replaceAll(r'\cdot', '·')
-      .replaceAll(r'\times', '×')
-      .replaceAll(r'\Omega', 'Ω')
-      .replaceAll('-', '−');
 }
 
 /// Folha inferior de feedback (certa/errada) da tela 9.
@@ -283,12 +258,12 @@ class BottomSheetFeedback extends StatelessWidget {
                   TextSpan(text: correctAnswer),
                 ],
               ),
-              style: const TextStyle(fontSize: 15, color: AppColors.ink),
+              style: TextStyle(fontSize: 15, color: AppColors.ink),
             ),
             const SizedBox(height: 6),
             MathText(
               explanation,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 color: AppColors.inkSoft,
                 height: 1.55,

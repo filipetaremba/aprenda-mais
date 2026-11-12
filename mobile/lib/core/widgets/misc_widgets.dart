@@ -71,7 +71,7 @@ class LevelNode extends StatelessWidget {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.border, width: 2),
           ),
@@ -151,19 +151,19 @@ class ChipFilter extends StatelessWidget {
     this.selected = false,
     this.onTap,
     this.color = AppColors.primary,
-    this.background = AppColors.primaryLight,
+    this.background,
   });
 
   final String label;
   final bool selected;
   final VoidCallback? onTap;
   final Color color;
-  final Color background;
+  final Color? background;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? color : background,
+      color: selected ? color : (background ?? AppColors.primaryLight),
       shape: const StadiumBorder(),
       child: InkWell(
         customBorder: const StadiumBorder(),
@@ -206,7 +206,7 @@ class AppBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
@@ -339,7 +339,7 @@ class WalletOption extends StatelessWidget {
                   const SizedBox(height: 10),
                   Text(
                     name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                       color: AppColors.ink,

@@ -61,7 +61,7 @@ class DevWidgetsPage extends StatelessWidget {
             ],
           ),
           t('StatTile'),
-          const Row(
+          Row(
             children: [
               Expanded(
                   child: StatTile(

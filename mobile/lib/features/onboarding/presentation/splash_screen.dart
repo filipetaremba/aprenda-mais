@@ -1,33 +1,58 @@
-import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/providers.dart';
 import '../../../app/routes.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../data/importador.dart';
 
-/// Tela 1 — Splash. Na fase de dados vai importar o seed se preciso.
-class SplashScreen extends StatefulWidget {
+/// Caminho do conteúdo embutido no APK (gerado por `npm run exportar:app` no backend).
+const conteudoEmbutido = 'assets/content/conteudo.json';
+
+/// Importa o conteúdo embutido se a app trouxer uma versão mais recente do que a instalada.
+Future<void> prepararConteudo(WidgetRef ref) async {
+  // sem cache: só se lê uma vez e são ~600 KB
+  final texto = await rootBundle.loadString(conteudoEmbutido, cache: false);
+  await ImportadorConteudo(ref.read(contentDbProvider)).importarConteudoApp(jsonDecode(texto) as Map<String, dynamic>);
+}
+
+/// Tela 1 — Splash: prepara o conteúdo (offline) e decide para onde ir.
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  Timer? _timer;
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  String? _erro;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(milliseconds: 1800), () {
-      if (mounted) Navigator.of(context).pushReplacementNamed(Routes.boasVindas);
-    });
+    _arrancar();
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  Future<void> _arrancar() async {
+    try {
+      final minimo = Future<void>.delayed(const Duration(milliseconds: 1200));
+      await prepararConteudo(ref);
+      final user = ref.read(utilizadorRepoProvider);
+      final perfil = await user.perfil();
+      final objectivos = await user.objectivos();
+      await minimo;
+      if (!mounted) return;
+      ref.refrescar();
+      context.go(perfil == null ? Routes.boasVindas : objectivos.isEmpty ? Routes.objectivos : Routes.inicio);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _erro = 'Não foi possível preparar as perguntas.\n$e');
+      }
+    }
   }
 
   @override
@@ -78,18 +103,18 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              const Text(
-                'A preparar as perguntas…',
-                style: TextStyle(color: Color(0xCCFFFFFF), fontSize: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  _erro ?? 'A preparar as perguntas…',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 12),
+                ),
               ),
               const Spacer(flex: 4),
-              GestureDetector(
-                // Atalho interno para ver todas as telas.
-                onLongPress: () => Navigator.of(context).pushNamed(Routes.devTelas),
-                child: const Text(
-                  'Funciona sem Internet · v1.0',
-                  style: TextStyle(color: Color(0x99FFFFFF), fontSize: 11),
-                ),
+              const Text(
+                'Funciona sem Internet · v1.0',
+                style: TextStyle(color: Color(0x99FFFFFF), fontSize: 11),
               ),
               const SizedBox(height: 24),
             ],

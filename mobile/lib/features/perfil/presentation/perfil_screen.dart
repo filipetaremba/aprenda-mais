@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/providers.dart';
 import '../../../app/routes.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../core/formatos.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../../data/licencas.dart';
+import '../../../data/repositorios.dart';
+
+final _versaoConteudoProvider = FutureProvider((ref) => ref.watch(contentDbProvider).lerMeta('versao_app'));
+final _produtosProvider = FutureProvider((ref) async => {for (final p in await ref.watch(conteudoRepoProvider).produtos()) p.row.codigo: p});
 
 /// Tela 15 — Perfil e definições (tab).
-class PerfilScreen extends StatefulWidget {
+class PerfilScreen extends ConsumerWidget {
   const PerfilScreen({super.key});
 
   @override
-  State<PerfilScreen> createState() => _PerfilScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final perfil = ref.watch(perfilProvider).value;
+    final ofertas = ref.watch(ofertasObjectivosProvider).value ?? const <OfertaInfo>[];
+    final licencas = ref.watch(licencasProvider).value ?? const <Licenca>[];
+    final produtos = ref.watch(_produtosProvider).value ?? const <String, ProdutoInfo>{};
+    final escuro = ref.watch(temaEscuroProvider);
+    final dias = perfil == null ? 0 : DateTime.now().difference(perfil.criadoEm).inDays + 1;
 
-class _PerfilScreenState extends State<PerfilScreen> {
-  bool _escuro = false;
-  bool _lembrete = true;
-
-  @override
-  Widget build(BuildContext context) {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -29,37 +37,24 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 width: 72,
                 height: 72,
                 padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.3), shape: BoxShape.circle),
                 child: Container(
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFFF1C7),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Text('🦁', style: TextStyle(fontSize: 34)),
+                  decoration: const BoxDecoration(color: Color(0xFFFFF1C7), shape: BoxShape.circle),
+                  child: Text(perfil?.avatar ?? '🦁', style: const TextStyle(fontSize: 34)),
                 ),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Filipe',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
-                    Text('A estudar há 12 dias',
-                        style: TextStyle(color: Color(0xDDFFFFFF), fontSize: 13)),
+                    Text(perfil?.nome ?? '', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
+                    Text(dias <= 1 ? 'Começaste hoje' : 'A estudar há $dias dias', style: const TextStyle(color: Color(0xDDFFFFFF), fontSize: 13)),
                   ],
                 ),
               ),
-              PillButton(
-                label: 'Editar',
-                background: Colors.white.withValues(alpha: 0.2),
-                onPressed: () => Navigator.of(context).pushNamed(Routes.nome),
-              ),
+              PillButton(label: 'Editar', background: Colors.white.withValues(alpha: 0.2), onPressed: () => context.push('${Routes.nome}?editar=1')),
             ],
           ),
         ),
@@ -69,44 +64,69 @@ class _PerfilScreenState extends State<PerfilScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const _Rotulo('OS MEUS OBJECTIVOS'),
-              const AppCard(
-                padding: EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    EmojiBox('💻', background: AppColors.primary, size: 40, fontSize: 18),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Eng. Informática',
-                              style: TextStyle(fontSize: 15, color: AppColors.ink)),
-                          Text('UniZambeze · activo',
-                              style: TextStyle(fontSize: 12, color: AppColors.muted)),
-                        ],
+              for (final o in ofertas) ...[
+                AppCard(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      EmojiBox(o.icone, size: 40, fontSize: 18),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(o.nome, style: TextStyle(fontSize: 15, color: AppColors.ink)),
+                            Text('${o.instituicaoSigla} · ${o.disciplinas}', style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                          ],
+                        ),
                       ),
-                    ),
-                    CircleAvatar(radius: 5, backgroundColor: AppColors.success),
-                  ],
+                      const CircleAvatar(radius: 5, backgroundColor: AppColors.success),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
+                const SizedBox(height: 10),
+              ],
               InkWell(
                 borderRadius: BorderRadius.circular(20),
-                onTap: () => Navigator.of(context).pushNamed(Routes.objectivos),
+                onTap: () => context.push('${Routes.objectivos}?editar=1'),
                 child: CustomPaint(
                   painter: _DashedBorder(),
                   child: const SizedBox(
                     height: 48,
                     width: double.infinity,
                     child: Center(
-                      child: Text('+ Adicionar objectivo',
-                          style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500)),
+                      child: Text('+ Adicionar ou trocar objectivo',
+                          style: TextStyle(color: AppColors.primary, fontSize: 14, fontWeight: FontWeight.w500)),
                     ),
                   ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const _Rotulo('AS MINHAS COMPRAS'),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    if (licencas.isEmpty)
+                      _Linha('🛒', 'Ainda não tens compras', const SizedBox.shrink()),
+                    for (final l in licencas) ...[
+                      _Linha(
+                        l.tipo == 'simulados' ? '🎯' : '🔓',
+                        produtos[l.produto]?.row.nome ?? l.produto,
+                        Text(l.validoAte == null ? 'sem fim' : 'até ${dataRelativa(l.validoAte!)} ${l.validoAte!.year}',
+                            style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+                      ),
+                      _divisor(),
+                    ],
+                    _Linha('🔑', 'Tenho um código de activação', const Icon(Icons.chevron_right, color: AppColors.muted),
+                        onTap: () => context.push(Routes.activar)),
+                    _divisor(),
+                    _Linha('♻️', 'Restaurar compra (telemóvel novo)', const Icon(Icons.chevron_right, color: AppColors.muted),
+                        onTap: () => context.push('${Routes.activar}?restaurar=1')),
+                    _divisor(),
+                    _Linha('⬇️', 'Verificar actualizações', const Icon(Icons.chevron_right, color: AppColors.muted),
+                        onTap: () => context.push(Routes.sincronizar)),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
@@ -115,43 +135,39 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
-                    _Linha('🌙', 'Modo escuro',
-                        AppSwitch(value: _escuro, onChanged: (v) => setState(() => _escuro = v))),
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    _Linha('⏰', 'Lembrete de estudo · 19:00',
-                        AppSwitch(value: _lembrete, onChanged: (v) => setState(() => _lembrete = v))),
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                    _Linha('🌙', 'Modo escuro', AppSwitch(value: escuro, onChanged: (v) => ref.read(temaEscuroProvider.notifier).definir(v))),
+                    _divisor(),
                     _Linha(
-                      '⬇️',
-                      'Actualizações de conteúdo',
+                      '⏰',
+                      'Lembrete de estudo',
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.accent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text('1 NOVA',
-                            style: TextStyle(
-                                fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                        decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(12)),
+                        child: const Text('EM BREVE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primary)),
                       ),
                     ),
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    const _Linha('ℹ️', 'Sobre o Aprova+',
-                        Icon(Icons.chevron_right, color: AppColors.muted)),
+                    _divisor(),
+                    _Linha('ℹ️', 'Sobre o Aprova+', const Icon(Icons.chevron_right, color: AppColors.muted), onTap: () => _sobre(context, ref)),
                   ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pushNamed(Routes.devTelas),
-                  child: const Text('Ver todas as telas (dev)',
-                      style: TextStyle(color: AppColors.muted, fontSize: 12)),
                 ),
               ),
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  static Widget _divisor() => Divider(height: 1, color: AppColors.escuro ? AppColors.border : const Color(0xFFF1F5F9));
+
+  void _sobre(BuildContext context, WidgetRef ref) {
+    final versao = ref.read(_versaoConteudoProvider).value ?? '—';
+    showAboutDialog(
+      context: context,
+      applicationName: 'Aprova+',
+      applicationVersion: '1.0 · conteúdo v$versao',
+      children: const [
+        Text('Preparação para os exames de admissão. Funciona sem Internet; só precisas de Internet para activar compras e descarregar conteúdo.'),
       ],
     );
   }
@@ -165,33 +181,32 @@ class _Rotulo extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
-        child: Text(texto,
-            style: const TextStyle(
-                fontSize: 12,
-                letterSpacing: 0.5,
-                fontWeight: FontWeight.w700,
-                color: AppColors.muted)),
+        child: Text(texto, style: const TextStyle(fontSize: 12, letterSpacing: 0.5, fontWeight: FontWeight.w700, color: AppColors.muted)),
       );
 }
 
 class _Linha extends StatelessWidget {
-  const _Linha(this.emoji, this.texto, this.trailing);
+  const _Linha(this.emoji, this.texto, this.trailing, {this.onTap});
 
   final String emoji;
   final String texto;
   final Widget trailing;
+  final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 16)),
-            const SizedBox(width: 14),
-            Expanded(
-                child: Text(texto, style: const TextStyle(fontSize: 14, color: AppColors.ink))),
-            trailing,
-          ],
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 16)),
+              const SizedBox(width: 14),
+              Expanded(child: Text(texto, style: TextStyle(fontSize: 14, color: AppColors.ink))),
+              trailing,
+            ],
+          ),
         ),
       );
 }

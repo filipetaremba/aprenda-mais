@@ -189,7 +189,7 @@ void _label(
   String text,
   Offset at, {
   double size = 13,
-  Color color = AppColors.ink,
+  Color? color,
   bool italic = false,
 }) {
   final tp = TextPainter(
@@ -198,7 +198,7 @@ void _label(
       style: TextStyle(
         fontFamily: 'Poppins',
         fontSize: size,
-        color: color,
+        color: color ?? AppColors.ink,
         fontWeight: FontWeight.w700,
         fontStyle: italic ? FontStyle.italic : FontStyle.normal,
       ),

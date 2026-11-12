@@ -12,7 +12,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "importar": "tsx scripts/importar.ts",
     "exportar:app": "tsx scripts/exportar-app.ts",
-    "chaves:gerar": "tsx scripts/gerar-chaves.ts"
+    "chaves:gerar": "tsx scripts/gerar-chaves.ts",
+    "produtos:padrao": "tsx scripts/produtos-padrao.ts"
   },
   "author": "",
   "license": "ISC",

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/app_colors.dart';
@@ -42,7 +43,7 @@ class _BoasVindasScreenState extends State<BoasVindasScreen> {
 
   void _next() {
     if (_page == _slides.length - 1) {
-      Navigator.of(context).pushReplacementNamed(Routes.nome);
+      context.go(Routes.nome);
     } else {
       _controller.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -64,7 +65,7 @@ class _BoasVindasScreenState extends State<BoasVindasScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () =>
-                      Navigator.of(context).pushReplacementNamed(Routes.nome),
+                      context.go(Routes.nome),
                   child: const Text(
                     'Saltar',
                     style: TextStyle(color: AppColors.muted, fontSize: 14),
@@ -96,7 +97,7 @@ class _BoasVindasScreenState extends State<BoasVindasScreen> {
                         Text(
                           s.$2,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
                             color: AppColors.ink,

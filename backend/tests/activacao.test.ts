@@ -148,7 +148,7 @@ describe('pacotes', () => {
     expect(validar('conteudo_app', conteudo)).toEqual([]);
     const tst = conteudo.exames.find((e: any) => e.prova === 'ACT-MAT');
     expect(tst.questoes.map((q: any) => q.nivel)).toEqual([1, 1, 2, 2]);
-    expect(conteudo.meta).toEqual({ nota_minima_padrao: 70, niveis_gratis: 2 });
+    expect(conteudo.meta).toEqual({ nota_minima_padrao: 70, niveis_gratis: 2, inclui_revistas: false });
     expect(conteudo.produtos.find((p: any) => p.codigo === 'ACT-MAT-NIVEIS')).toMatchObject({ preco_mt: 59, provas: ['ACT-MAT'] });
     expect(conteudo.niveis.filter((n: any) => n.prova === 'ACT-MAT')).toHaveLength(10);
     expect(r.porProva['ACT-MAT']).toBe(4);

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/app_colors.dart';
@@ -34,7 +35,7 @@ class _AguardarScreenState extends State<AguardarScreen> {
       // Mock: o "PIN" é confirmado ao fim de 6 segundos.
       if (_expiracao - _restante >= 6) {
         t.cancel();
-        Navigator.of(context).pushReplacementNamed(Routes.concluido);
+        context.pushReplacement(Routes.concluido);
       }
     });
   }
@@ -104,7 +105,7 @@ class _AguardarScreenState extends State<AguardarScreen> {
                                     textAlign: TextAlign.center,
                                     style: TextStyle(fontSize: 7, color: AppColors.muted)),
                                 const SizedBox(height: 6),
-                                const Text('● ● ● ○',
+                                Text('● ● ● ○',
                                     style: TextStyle(fontSize: 8, color: AppColors.ink)),
                               ],
                             ),
@@ -113,12 +114,12 @@ class _AguardarScreenState extends State<AguardarScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text('Confirma no teu telemóvel',
+                    Text('Confirma no teu telemóvel',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 21, fontWeight: FontWeight.w700, color: AppColors.ink)),
                     const SizedBox(height: 8),
-                    const Text.rich(
+                    Text.rich(
                       TextSpan(children: [
                         TextSpan(text: 'Enviámos um pedido de pagamento M-Pesa para '),
                         TextSpan(

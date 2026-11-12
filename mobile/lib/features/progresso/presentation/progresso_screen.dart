@@ -1,22 +1,102 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/providers.dart';
+import '../../../app/routes.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../core/formatos.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../../data/repositorios.dart';
+import '../../../data/user/user_db.dart';
+import '../../inicio/presentation/inicio_screen.dart';
+
+class DadosProgresso {
+  const DadosProgresso({
+    required this.respostas,
+    required this.acertos,
+    required this.niveis,
+    required this.porDia,
+    required this.temas,
+    required this.historico,
+    required this.nomeProva,
+    required this.notaMinima,
+  });
+
+  final int respostas;
+  final double acertos;
+  final int niveis;
+
+  /// Média da nota em cada um dos últimos 7 dias (null = sem tentativas)
+  final List<(DateTime, double?)> porDia;
+  final List<ResumoTema> temas;
+  final List<TentativaRow> historico;
+  final Map<String, String> nomeProva;
+  final int notaMinima;
+}
+
+final progressoProvider = FutureProvider<DadosProgresso>((ref) async {
+  ref.watch(progressoVersaoProvider);
+  final user = ref.watch(utilizadorRepoProvider);
+  final conteudo = ref.watch(conteudoRepoProvider);
+  final detalhes = await ref.watch(detalhesObjectivosProvider.future);
+  final regras = await ref.watch(regrasProvider.future);
+
+  final hoje = DateTime.now();
+  final inicio = DateTime(hoje.year, hoje.month, hoje.day).subtract(const Duration(days: 6));
+  final recentes = await user.historico(desde: inicio);
+  final porDia = [
+    for (var i = 0; i < 7; i++)
+      () {
+        final d = inicio.add(Duration(days: i));
+        final doDia = recentes.where((t) => t.terminadaEm.year == d.year && t.terminadaEm.month == d.month && t.terminadaEm.day == d.day);
+        return (d, doDia.isEmpty ? null : doDia.map((t) => t.percentagem).reduce((a, b) => a + b) / doDia.length);
+      }(),
+  ];
+
+  final todas = await user.historico();
+  final respostas = todas.fold(0, (s, t) => s + t.total);
+  final certas = todas.fold(0, (s, t) => s + t.certas);
+  final respondidas = await user.questoesRespondidas();
+  final temas = await user.temasFracos(
+    await conteudo.temaDasQuestoes(respondidas),
+    await conteudo.temas(),
+    await conteudo.disciplinaDoTema(),
+  );
+  final nomes = <String, String>{};
+  for (final t in todas.take(20)) {
+    nomes[t.prova] ??= (await conteudo.prova(t.prova))?.disciplinaNome ?? t.prova;
+  }
+  return DadosProgresso(
+    respostas: respostas,
+    acertos: respostas == 0 ? 0 : certas * 100 / respostas,
+    niveis: detalhes.fold(0, (s, d) => s + d.concluidos),
+    porDia: porDia,
+    temas: temas.where((t) => t.fraccao < 0.8).take(3).toList(),
+    historico: todas.take(10).toList(),
+    nomeProva: nomes,
+    notaMinima: regras.notaMinimaPadrao,
+  );
+});
 
 /// Tela 14 — Progresso (tab).
-class ProgressoScreen extends StatelessWidget {
+class ProgressoScreen extends ConsumerWidget {
   const ProgressoScreen({super.key});
 
+  static const _dias = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = ref.watch(progressoProvider).value;
+    final dias = ref.watch(diasSeguidosProvider).value ?? 0;
+    if (p == null) return const Center(child: CircularProgressIndicator());
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
         Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-          ),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28))),
           child: SafeArea(
             bottom: false,
             child: Padding(
@@ -25,52 +105,24 @@ class ProgressoScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Expanded(
-                        child: Text('O teu progresso',
-                            style: TextStyle(
-                                fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink)),
-                      ),
+                      Expanded(child: Text('O teu progresso', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink))),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryLight,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Text('Últimos 7 dias ▾',
-                            style: TextStyle(color: AppColors.primary, fontSize: 12)),
+                        decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(16)),
+                        child: const Text('Últimos 7 dias', style: TextStyle(color: AppColors.primary, fontSize: 12)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Row(
+                  Row(
                     children: [
-                      Expanded(
-                          child: StatTile(
-                              value: '342',
-                              label: 'respostas',
-                              color: AppColors.primary,
-                              background: AppColors.primaryLight)),
-                      SizedBox(width: 8),
-                      Expanded(
-                          child: StatTile(
-                              value: '71%',
-                              label: 'acertos',
-                              color: AppColors.success,
-                              background: AppColors.successLight)),
-                      SizedBox(width: 8),
-                      Expanded(
-                          child: StatTile(
-                              value: '6',
-                              label: 'níveis',
-                              color: Color(0xFFF59E0B),
-                              background: Color(0xFFFFFBEB))),
-                      SizedBox(width: 8),
-                      Expanded(
-                          child: StatTile(
-                              value: '🔥6',
-                              label: 'dias',
-                              color: AppColors.error,
-                              background: AppColors.errorLight)),
+                      Expanded(child: StatTile(value: '${p.respostas}', label: 'respostas', color: AppColors.primary, background: AppColors.primaryLight)),
+                      const SizedBox(width: 8),
+                      Expanded(child: StatTile(value: percentagem(p.acertos), label: 'acertos', color: AppColors.success, background: AppColors.successLight)),
+                      const SizedBox(width: 8),
+                      Expanded(child: StatTile(value: '${p.niveis}', label: 'níveis', color: const Color(0xFFF59E0B), background: AppColors.accentLight)),
+                      const SizedBox(width: 8),
+                      Expanded(child: StatTile(value: '🔥$dias', label: 'dias', color: AppColors.error, background: AppColors.errorLight)),
                     ],
                   ),
                 ],
@@ -89,70 +141,65 @@ class ProgressoScreen extends StatelessWidget {
                   children: [
                     const SectionTitle('Evolução das notas'),
                     const SizedBox(height: 12),
-                    const SizedBox(
-                      height: 130,
-                      width: double.infinity,
-                      child: CustomPaint(painter: _ChartPainter()),
-                    ),
+                    SizedBox(height: 150, width: double.infinity, child: _Grafico(p.porDia, p.notaMinima)),
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        for (final d in ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'])
-                          Text(d, style: const TextStyle(fontSize: 10, color: AppColors.muted)),
+                        for (final (d, _) in p.porDia) Text(_dias[d.weekday - 1], style: const TextStyle(fontSize: 10, color: AppColors.muted)),
                       ],
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 14),
-              const AppCard(
+              AppCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SectionTitle('Temas a reforçar'),
-                    SizedBox(height: 12),
-                    _Tema('Trigonometria · Mat.', 0.45, AppColors.error, AppColors.errorLight),
-                    _Tema('Electricidade · Fís.', 0.52, AppColors.accent, Color(0xFFFFFBEB)),
-                    _Tema('Logaritmos · Mat.', 0.58, AppColors.accent, Color(0xFFFFFBEB)),
+                    const SectionTitle('Temas a reforçar'),
+                    const SizedBox(height: 12),
+                    if (p.temas.isEmpty)
+                      Text('Responde a mais perguntas para vermos os temas em que precisas de reforço.',
+                          style: TextStyle(fontSize: 13, color: AppColors.inkSoft)),
+                    for (final t in p.temas)
+                      _Tema(
+                        '${t.nome}${t.disciplina.isEmpty ? '' : ' · ${t.disciplina}'}',
+                        t.fraccao,
+                        t.fraccao < 0.5 ? AppColors.error : AppColors.accent,
+                        t.fraccao < 0.5 ? AppColors.errorLight : AppColors.accentLight,
+                      ),
                   ],
                 ),
               ),
               const SizedBox(height: 14),
               const SectionTitle('Histórico'),
               const SizedBox(height: 10),
-              for (final h in const [
-                ('80%', 'Matemática · Nível 4', 'Hoje · 18 min', true),
-                ('72%', 'Simulado de Matemática', '5 Nov · 84 min', true),
-                ('60%', 'Matemática · Nível 4', 'Ontem · 22 min', false),
-                ('65%', 'Física · Nível 2', '3 Nov · 19 min', false),
-              ])
+              if (p.historico.isEmpty) Text('Ainda não fizeste nenhum nível.', style: TextStyle(color: AppColors.inkSoft)),
+              for (final t in p.historico)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: AppCard(
                     padding: const EdgeInsets.all(12),
+                    onTap: () => context.push(Routes.revisao(t.id)),
                     child: Row(
                       children: [
-                        EmojiBox(h.$1,
-                            background: h.$4 ? AppColors.successLight : AppColors.accentLight,
-                            size: 40,
-                            fontSize: 12),
+                        EmojiBox(percentagem(t.percentagem),
+                            background: t.aprovado ? AppColors.successLight : AppColors.accentLight, size: 40, fontSize: 12),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(h.$2,
-                                  style: const TextStyle(fontSize: 14, color: AppColors.ink)),
-                              Text(h.$3,
-                                  style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                              Text(
+                                t.simulado != null ? 'Simulado de ${p.nomeProva[t.prova] ?? t.prova}' : '${p.nomeProva[t.prova] ?? t.prova} · Nível ${t.nivel}',
+                                style: TextStyle(fontSize: 14, color: AppColors.ink),
+                              ),
+                              Text('${dataRelativa(t.terminadaEm)} · ${duracao(t.duracaoSeg)}', style: const TextStyle(fontSize: 12, color: AppColors.muted)),
                             ],
                           ),
                         ),
-                        Text(h.$4 ? 'Passou' : 'Não passou',
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: h.$4 ? AppColors.success : AppColors.error)),
+                        Text(t.aprovado ? 'Passou' : 'Não passou', style: TextStyle(fontSize: 12, color: t.aprovado ? AppColors.success : AppColors.error)),
                       ],
                     ),
                   ),
@@ -182,10 +229,8 @@ class _Tema extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(
-                  child: Text(nome, style: const TextStyle(fontSize: 13, color: AppColors.ink))),
-              Text('${(valor * 100).round()}%',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: pctColor, fontSize: 13)),
+              Expanded(child: Text(nome, style: TextStyle(fontSize: 13, color: AppColors.ink))),
+              Text('${(valor * 100).round()}%', style: TextStyle(fontWeight: FontWeight.w700, color: pctColor, fontSize: 13)),
             ],
           ),
           const SizedBox(height: 6),
@@ -196,82 +241,68 @@ class _Tema extends StatelessWidget {
   }
 }
 
-/// Gráfico de linha simples (na fase 5 passa a `fl_chart`).
-class _ChartPainter extends CustomPainter {
-  const _ChartPainter();
+/// Média diária (fl_chart), com a linha da nota mínima tracejada.
+class _Grafico extends StatelessWidget {
+  const _Grafico(this.porDia, this.notaMinima);
 
-  static const _valores = [0.45, 0.52, 0.49, 0.61, 0.58, 0.68, 0.72];
+  final List<(DateTime, double?)> porDia;
+  final int notaMinima;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    double y(double v) => size.height - (v - 0.4) / 0.35 * size.height;
-    final grid = Paint()
-      ..color = const Color(0xFFE8EEF8)
-      ..strokeWidth = 1;
-    for (final g in [0.5, 0.6]) {
-      canvas.drawLine(Offset(0, y(g)), Offset(size.width, y(g)), grid);
-    }
-    // linha da nota mínima (70%) tracejada
-    final meta = Paint()
-      ..color = AppColors.success
-      ..strokeWidth = 1.2;
-    for (double x = 0; x < size.width; x += 8) {
-      canvas.drawLine(Offset(x, y(0.7)), Offset(x + 4, y(0.7)), meta);
-    }
-    final tp = TextPainter(
-      text: const TextSpan(
-          text: '70%',
-          style: TextStyle(fontSize: 9, color: AppColors.muted, fontFamily: 'Poppins')),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(canvas, Offset(0, y(0.7) - 13));
-
-    final dx = size.width / (_valores.length - 1);
-    final pts = [
-      for (var i = 0; i < _valores.length; i++) Offset(i * dx, y(_valores[i])),
+  Widget build(BuildContext context) {
+    final pontos = [
+      for (final (i, (_, v)) in porDia.indexed)
+        if (v != null) FlSpot(i.toDouble(), v),
     ];
-    final area = Path()..moveTo(pts.first.dx, size.height);
-    for (final p in pts) {
-      area.lineTo(p.dx, p.dy);
-    }
-    area
-      ..lineTo(pts.last.dx, size.height)
-      ..close();
-    canvas.drawPath(
-      area,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppColors.primary.withValues(alpha: 0.25),
-            AppColors.primary.withValues(alpha: 0.0),
-          ],
-        ).createShader(Offset.zero & size),
-    );
-    final line = Path()..moveTo(pts.first.dx, pts.first.dy);
-    for (final p in pts.skip(1)) {
-      line.lineTo(p.dx, p.dy);
-    }
-    canvas.drawPath(
-      line,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..strokeJoin = StrokeJoin.round
-        ..color = AppColors.primary,
-    );
-    canvas.drawCircle(pts.last, 6, Paint()..color = Colors.white);
-    canvas.drawCircle(
-      pts.last,
-      6,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
-        ..color = AppColors.primary,
+    return LineChart(
+      LineChartData(
+        minX: 0,
+        maxX: 6,
+        minY: 0,
+        maxY: 100,
+        titlesData: const FlTitlesData(show: false),
+        borderData: FlBorderData(show: false),
+        lineTouchData: const LineTouchData(enabled: false),
+        gridData: FlGridData(
+          drawVerticalLine: false,
+          horizontalInterval: 25,
+          getDrawingHorizontalLine: (_) => FlLine(color: AppColors.border, strokeWidth: 1),
+        ),
+        extraLinesData: ExtraLinesData(horizontalLines: [
+          HorizontalLine(
+            y: notaMinima.toDouble(),
+            color: AppColors.success,
+            strokeWidth: 1.2,
+            dashArray: [4, 4],
+            label: HorizontalLineLabel(
+              show: true,
+              alignment: Alignment.topLeft,
+              style: const TextStyle(fontSize: 9, color: AppColors.muted),
+              labelResolver: (_) => '$notaMinima%',
+            ),
+          ),
+        ]),
+        lineBarsData: [
+          LineChartBarData(
+            spots: pontos,
+            isCurved: true,
+            preventCurveOverShooting: true,
+            color: AppColors.primary,
+            barWidth: 3,
+            dotData: FlDotData(
+              getDotPainter: (_, _, _, _) => FlDotCirclePainter(radius: 4, color: AppColors.surface, strokeWidth: 2.5, strokeColor: AppColors.primary),
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [AppColors.primary.withValues(alpha: 0.25), AppColors.primary.withValues(alpha: 0)],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

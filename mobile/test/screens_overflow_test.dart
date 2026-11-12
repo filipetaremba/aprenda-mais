@@ -1,48 +1,36 @@
-import 'package:flutter/material.dart';
+import 'package:aprova_mais/app/routes.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:aprova_mais/app/app.dart';
-import 'package:aprova_mais/app/routes.dart';
+import 'ajuda_telas.dart';
 
-/// Abre cada tela num ecrã pequeno (360×640) e falha se algo transbordar.
+/// Todas as telas com dados reais de teste cabem num ecrã pequeno (360×640), no tema claro e escuro.
 void main() {
-  const rotas = [
-    Routes.splash,
+  final rotas = <String>[
     Routes.boasVindas,
-    Routes.nome,
-    Routes.objectivos,
+    '${Routes.nome}?editar=1',
+    '${Routes.objectivos}?editar=1',
     Routes.inicio,
-    Routes.niveis,
-    Routes.nivelDetalhe,
-    Routes.quiz,
-    Routes.resultado,
-    Routes.revisao,
-    Routes.simulado,
-    Routes.desbloquear,
-    Routes.pagamento,
-    Routes.aguardar,
+    Routes.inicioTab(1),
+    Routes.inicioTab(2),
+    Routes.inicioTab(3),
+    Routes.prova('TST-MAT'),
+    Routes.nivel('TST-MAT', 1),
+    Routes.quiz('TST-MAT', 1),
+    Routes.lojaDe('TST-MAT'),
+    Routes.lojaDe('TST-MAT', tipo: 'simulados'),
+    Routes.activar,
+    '${Routes.activar}?restaurar=1',
+    Routes.sincronizar,
     Routes.concluido,
-    Routes.devTelas,
-    Routes.devWidgets,
   ];
 
-  for (final rota in rotas) {
-    testWidgets('Tela $rota cabe em 360×640', (tester) async {
-      tester.view.physicalSize = const Size(360, 640);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-
-      final key = GlobalKey<NavigatorState>();
-      await tester.pumpWidget(const AprovaApp());
-      final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
-      nav.pushNamed(rota);
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.pump(const Duration(milliseconds: 500));
-      expect(tester.takeException(), isNull);
-
-      // Limpa timers (splash/aguardar) antes de terminar.
-      await tester.pumpWidget(MaterialApp(navigatorKey: key, home: const SizedBox()));
-      await tester.pump(const Duration(seconds: 10));
-    });
+  for (final escuro in [false, true]) {
+    for (final rota in rotas) {
+      testWidgets('$rota cabe em 360×640${escuro ? ' (escuro)' : ''}', (tester) async {
+        final a = await prepararAmbiente(tester);
+        await abrir(tester, a, rota, escuro: escuro);
+        expect(tester.takeException(), isNull);
+      });
+    }
   }
 }

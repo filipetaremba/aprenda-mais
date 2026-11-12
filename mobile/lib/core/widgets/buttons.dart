@@ -68,14 +68,14 @@ class SecondaryButton extends StatelessWidget {
     super.key,
     required this.label,
     this.onPressed,
-    this.background = AppColors.primaryLight,
+    this.background,
     this.foreground = AppColors.primary,
     this.height = 48,
   });
 
   final String label;
   final VoidCallback? onPressed;
-  final Color background;
+  final Color? background;
   final Color foreground;
   final double height;
 
@@ -84,7 +84,7 @@ class SecondaryButton extends StatelessWidget {
     return SizedBox(
       height: height,
       child: Material(
-        color: background,
+        color: background ?? AppColors.primaryLight,
         borderRadius: BorderRadius.circular(AppRadius.button),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.button),

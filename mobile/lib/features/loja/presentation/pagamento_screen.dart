@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/app_colors.dart';
@@ -53,7 +54,7 @@ class _PagamentoScreenState extends State<PagamentoScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(12, 8, 48, 0),
               child: Row(
                 children: [
@@ -77,7 +78,7 @@ class _PagamentoScreenState extends State<PagamentoScreen> {
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
                         Expanded(
                           child: Column(
@@ -102,7 +103,7 @@ class _PagamentoScreenState extends State<PagamentoScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text('Escolhe a carteira móvel',
+                  Text('Escolhe a carteira móvel',
                       style: TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.ink)),
                   const SizedBox(height: 10),
@@ -132,7 +133,7 @@ class _PagamentoScreenState extends State<PagamentoScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  const Text('Número de telemóvel',
+                  Text('Número de telemóvel',
                       style: TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.ink)),
                   const SizedBox(height: 10),
@@ -163,7 +164,7 @@ class _PagamentoScreenState extends State<PagamentoScreen> {
                               final c = carteiraDoNumero(_tel.text);
                               if (c != null) _carteira = c;
                             }),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.ink),
@@ -222,7 +223,7 @@ class _PagamentoScreenState extends State<PagamentoScreen> {
                     label: 'Pagar 99 MT',
                     onPressed: detectada == null
                         ? null
-                        : () => Navigator.of(context).pushNamed(Routes.aguardar),
+                        : () => context.push(Routes.aguardar),
                   ),
                   const SizedBox(height: 8),
                   const Text('🔒 Precisas de Internet só neste passo',
