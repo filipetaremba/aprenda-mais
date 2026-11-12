@@ -3,9 +3,97 @@
   "$id": "https://aprova.mz/schema/content.schema.json",
   "title": "Conteúdo Aprova+",
   "description": "Formato do conteúdo (catálogo e questões) partilhado pelos seeds (ESTRACAO_EXAM), pelo backend e pelo importador da app. Fonte da verdade.",
-  "anyOf": [{ "$ref": "#/$defs/ficheiro_questoes" }, { "$ref": "#/$defs/catalogo" }],
+  "anyOf": [
+    { "$ref": "#/$defs/ficheiro_questoes" },
+    { "$ref": "#/$defs/catalogo" },
+    { "$ref": "#/$defs/pacote" },
+    { "$ref": "#/$defs/conteudo_app" }
+  ],
 
   "$defs": {
+    "pacote": {
+      "description": "pacote.json dentro do .zip de uma prova (níveis pagos + simulados). As imagens vão em imagens/ no mesmo zip.",
+      "type": "object",
+      "required": ["formato", "tipo", "prova", "versao", "gerado_em", "niveis_incluidos", "niveis", "simulados", "conteudo"],
+      "properties": {
+        "formato": { "const": 1 },
+        "tipo": { "const": "pacote" },
+        "prova": { "$ref": "#/$defs/codigo" },
+        "versao": { "type": "integer", "minimum": 1 },
+        "gerado_em": { "type": "string" },
+        "niveis_incluidos": { "type": "array", "items": { "type": "integer", "minimum": 1, "maximum": 10 } },
+        "niveis": { "type": "array", "items": { "$ref": "#/$defs/nivel" } },
+        "simulados": { "type": "array", "items": { "$ref": "#/$defs/simulado" } },
+        "conteudo": { "$ref": "#/$defs/ficheiro_questoes" }
+      }
+    },
+
+    "conteudo_app": {
+      "description": "assets/content/conteudo.json do APK: catálogo, preços, níveis e as questões grátis (níveis 1–2). Imagens em assets/content/imagens/.",
+      "type": "object",
+      "required": ["formato", "tipo", "versao", "gerado_em", "meta", "catalogo", "niveis", "produtos", "simulados", "exames"],
+      "properties": {
+        "formato": { "const": 1 },
+        "tipo": { "const": "conteudo_app" },
+        "versao": { "type": "integer" },
+        "gerado_em": { "type": "string" },
+        "meta": {
+          "type": "object",
+          "required": ["nota_minima_padrao", "niveis_gratis"],
+          "properties": {
+            "nota_minima_padrao": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "niveis_gratis": { "type": "integer", "minimum": 0, "maximum": 10 }
+          }
+        },
+        "catalogo": { "$ref": "#/$defs/catalogo" },
+        "niveis": { "type": "array", "items": { "$ref": "#/$defs/nivel" } },
+        "produtos": { "type": "array", "items": { "$ref": "#/$defs/produto" } },
+        "simulados": { "type": "array", "items": { "$ref": "#/$defs/simulado" } },
+        "exames": { "type": "array", "items": { "$ref": "#/$defs/ficheiro_questoes" } }
+      }
+    },
+
+    "nivel": {
+      "type": "object",
+      "required": ["prova", "numero", "titulo"],
+      "properties": {
+        "prova": { "$ref": "#/$defs/codigo" },
+        "numero": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "titulo": { "type": "string" },
+        "descricao": { "type": ["string", "null"] },
+        "nota_minima": { "type": ["integer", "null"], "minimum": 0, "maximum": 100, "description": "null = usar meta.nota_minima_padrao" }
+      }
+    },
+
+    "simulado": {
+      "type": "object",
+      "required": ["codigo", "titulo", "duracao_min", "num_perguntas", "gratuito"],
+      "properties": {
+        "codigo": { "$ref": "#/$defs/codigo" },
+        "prova": { "type": ["string", "null"], "description": "simulado de uma disciplina" },
+        "oferta": { "type": ["string", "null"], "description": "simulado completo de um curso" },
+        "titulo": { "type": "string" },
+        "duracao_min": { "type": "integer", "minimum": 1 },
+        "num_perguntas": { "type": "integer", "minimum": 1 },
+        "gratuito": { "type": "boolean" }
+      }
+    },
+
+    "produto": {
+      "type": "object",
+      "required": ["codigo", "nome", "tipo", "preco_mt", "provas"],
+      "properties": {
+        "codigo": { "$ref": "#/$defs/codigo" },
+        "nome": { "type": "string" },
+        "descricao": { "type": ["string", "null"] },
+        "tipo": { "enum": ["niveis", "simulados"] },
+        "preco_mt": { "type": "integer", "minimum": 0 },
+        "epoca": { "type": ["string", "null"] },
+        "ordem": { "type": "integer" },
+        "provas": { "$ref": "#/$defs/lista_texto" }
+      }
+    },
+
     "codigo": { "type": "string", "pattern": "^[A-Z0-9]+(-[A-Z0-9]+)*$" },
     "texto_opcional": { "type": ["string", "null"] },
     "lista_texto": { "type": "array", "items": { "type": "string" } },
@@ -100,6 +188,8 @@
         "codigo": { "$ref": "#/$defs/codigo" },
         "slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
         "instituicao": { "$ref": "#/$defs/codigo" },
+        "curso": { "$ref": "#/$defs/codigo", "description": "curso genérico (ex.: ENGENHARIA-INFORMATICA); calculado do nome se faltar" },
+        "icone": { "type": ["string", "null"] },
         "nome": { "type": "string", "minLength": 1 },
         "nome_original": { "type": "string" },
         "faculdade": { "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/lista_texto" }] },
@@ -183,6 +273,7 @@
         "enunciado": { "type": "string", "minLength": 1, "description": "Markdown simples + LaTeX ($...$ / $$...$$)" },
         "imagens": { "$ref": "#/$defs/lista_texto" },
         "dica": { "type": ["string", "null"], "description": "Opcional. Não penaliza o estudante." },
+        "ano": { "type": ["integer", "null"], "description": "Ano do exame de origem (nos seeds vem em fonte.ano do ficheiro)." },
         "alternativas": {
           "type": "array",
           "minItems": 2,

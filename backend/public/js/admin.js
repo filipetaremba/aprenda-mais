@@ -21,6 +21,32 @@
     });
   });
 
+  // Copiar para a área de transferência
+  document.querySelectorAll('[data-copiar]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var texto = b.dataset.copiar;
+      var feito = function () { var t = b.textContent; b.textContent = 'Copiado ✓'; setTimeout(function () { b.textContent = t; }, 1500); };
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(texto).then(feito);
+      else {
+        var ta = document.createElement('textarea');
+        ta.value = texto; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); feito(); } finally { ta.remove(); }
+      }
+    });
+  });
+
+  // Descarregar o conteúdo de um <textarea> como ficheiro (ex.: CSV dos códigos gerados)
+  document.querySelectorAll('[data-descarregar]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var alvo = document.querySelector(b.dataset.alvo);
+      var blob = new Blob(['﻿' + alvo.value], { type: 'text/csv;charset=utf-8' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = b.dataset.descarregar;
+      document.body.appendChild(a); a.click(); a.remove();
+    });
+  });
+
   // ───── Formulário da questão ─────
   var form = document.getElementById('form-questao');
   if (!form) return;

@@ -7,8 +7,9 @@ import { prisma } from './db';
 import { LABEL_ESTADO } from './dominio';
 import { garantirCsrf, lerFlash, PrismaSessionStore, verificarCsrfGlobal } from './seguranca';
 import { adminRouter } from './admin';
+import { apiRouter, type OpcoesApi } from './api';
 
-export function createApp() {
+export function createApp(opcoes: OpcoesApi = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.set('view engine', 'ejs');
@@ -43,6 +44,9 @@ export function createApp() {
 
   app.use('/static/katex', express.static(path.join(path.dirname(require.resolve('katex/package.json')), 'dist'), { maxAge: '7d' }));
   app.use('/static', express.static(path.join(config.raiz, 'public'), { maxAge: config.producao ? '1d' : 0 }));
+
+  // API da app: JSON + Bearer token, sem cookies/sessão (por isso antes do CSRF)
+  app.use('/api/v1', apiRouter(opcoes));
 
   app.use(express.urlencoded({ extended: true, limit: '2mb' }));
   app.use(

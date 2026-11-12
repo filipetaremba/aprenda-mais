@@ -1,0 +1,31 @@
+<%- include('../partials/topo', { titulo }) %>
+
+<div class="flash info">Copia ou envia agora: <b>estes códigos não voltam a aparecer</b> (só se guarda uma versão cifrada).</div>
+
+<div class="cartao">
+  <p>
+    <% if (produto) { %><b><%= produto.nome %></b> – <%= produto.preco_mt %> MT · <% } %>
+    válido até <b><%= validade %></b><% if (nota) { %> · <%= nota %><% } %>
+  </p>
+  <% if (csv) { %>
+    <textarea id="csv-codigos" class="oculto" readonly><%= csv %></textarea>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button type="button" class="btn sec" data-descarregar="codigos.csv" data-alvo="#csv-codigos">Descarregar CSV com os códigos</button>
+      <a class="btn sec" href="/admin/codigos">Ver todos os códigos</a>
+    </div>
+  <% } %>
+
+  <% for (const c of codigos) { %>
+  <div class="cartao" style="background:var(--bg);box-shadow:none">
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <code style="font-size:20px;padding:6px 12px;letter-spacing:.05em" class="codigo-gerado"><%= c.codigo %></code>
+      <button type="button" class="btn sec pequeno" data-copiar="<%= c.codigo %>">Copiar código</button>
+      <button type="button" class="btn sec pequeno" data-copiar="<%= c.mensagem %>">Copiar mensagem</button>
+      <a class="btn ok pequeno" href="<%= c.whatsapp %>" target="_blank" rel="noopener noreferrer">Enviar por WhatsApp</a>
+    </div>
+    <textarea readonly rows="5"><%= c.mensagem %></textarea>
+  </div>
+  <% } %>
+</div>
+
+<%- include('../partials/fim') %>

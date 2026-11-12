@@ -18,7 +18,7 @@
   <aside class="lado">
     <div class="marca"><span>A+</span> Aprova+</div>
     <nav>
-      <% const menu = [['/admin','Painel','📊'],['/admin/catalogo','Catálogo','🏛️'],['/admin/questoes','Questões','📝'],['/admin/produtos','Produtos','🏷️'],['/admin/estudantes','Estudantes','🎓'],['/admin/importar','Importar JSON','📥']]; %>
+      <% const menu = [['/admin','Painel','📊'],['/admin/catalogo','Catálogo','🏛️'],['/admin/questoes','Questões','📝'],['/admin/produtos','Produtos','🏷️'],['/admin/codigos','Códigos','🔑'],['/admin/pacotes','Pacotes','📦'],['/admin/estudantes','Estudantes','🎓'],['/admin/importar','Importar JSON','📥']]; %>
       <% for (const [href, nome, icone] of menu) { const activo = href === '/admin' ? caminho === '/admin' || caminho === '/admin/' : caminho.startsWith(href); %>
         <a href="<%= href %>" class="<%= activo ? 'activo' : '' %>"><span><%= icone %></span><%= nome %></a>
       <% } %>

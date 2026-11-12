@@ -297,6 +297,7 @@ model Estudante {
   criado_em DateTime          @default(now())
   codigos   CodigoActivacao[]
   licencas  Licenca[]
+  tokens    TokenEstudante[]
 
   @@index([telefone])
   @@map("estudantes")
@@ -306,11 +307,16 @@ model Estudante {
 
 model CodigoActivacao {
   id                     Int        @id @default(autoincrement())
-  /// SHA-256(código + pepper). O código em claro só aparece no momento da geração.
+  /// HMAC-SHA256(pepper, código). O código em claro só aparece no momento da geração.
   codigo_hash            String     @unique
   /// Últimos caracteres, para o admin identificar o código (ex.: APV-••••-K7QX).
   codigo_final           String
-  produto                String
+  /// activacao (abre um produto) | recuperacao (devolve as licenças de um estudante noutro telemóvel)
+  tipo                   String     @default("activacao")
+  /// Só nos códigos de activação.
+  produto                String?
+  /// Só nos códigos de recuperação: estudante a recuperar.
+  para_estudante_id      String?
   /// disponivel | usado | revogado
   estado                 String     @default("disponivel")
   validade_ate           DateTime?
@@ -320,13 +326,27 @@ model CodigoActivacao {
   usado_em               DateTime?
   dispositivo_id         String?
   nota                   String?
-  prod                   Produto    @relation(fields: [produto], references: [codigo])
+  prod                   Produto?   @relation(fields: [produto], references: [codigo])
   admin                  Admin?     @relation(fields: [criado_por], references: [id])
   estudante              Estudante? @relation(fields: [usado_por_estudante_id], references: [id])
   licencas               Licenca[]
 
   @@index([estado])
   @@map("codigos_activacao")
+}
+
+/// Token da app (Bearer). Guarda-se só o SHA-256; um por telemóvel.
+model TokenEstudante {
+  id             Int       @id @default(autoincrement())
+  token_hash     String    @unique
+  estudante      String
+  dispositivo_id String?
+  criado_em      DateTime  @default(now())
+  ultimo_uso     DateTime?
+  revogado       Boolean   @default(false)
+  est            Estudante @relation(fields: [estudante], references: [id])
+
+  @@map("tokens_estudante")
 }
 
 model Licenca {
@@ -349,16 +369,20 @@ model Licenca {
 
 /// Versão publicada do pacote pago de uma prova (níveis 3–10 + simulados).
 model Pacote {
-  id            Int      @id @default(autoincrement())
-  prova         String
-  versao        Int
-  ficheiro      String
-  sha256        String
-  tamanho_bytes Int
-  num_questoes  Int
-  publicado_em  DateTime @default(now())
-  publicado_por Int?
-  pr            Prova    @relation(fields: [prova], references: [codigo])
+  id              Int      @id @default(autoincrement())
+  prova           String
+  versao          Int
+  /// Caminho relativo a STORAGE_DIR/pacotes
+  ficheiro        String
+  /// SHA-256 do .zip (o que a app verifica)
+  sha256          String
+  /// SHA-256 do conteúdo (sem datas): igual ao anterior = nada mudou, não se publica nova versão
+  conteudo_sha256 String   @default("")
+  tamanho_bytes   Int
+  num_questoes    Int
+  publicado_em    DateTime @default(now())
+  publicado_por   Int?
+  pr              Prova    @relation(fields: [prova], references: [codigo])
 
   @@unique([prova, versao])
   @@map("pacotes")

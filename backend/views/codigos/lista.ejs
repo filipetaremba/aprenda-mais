@@ -1,0 +1,68 @@
+<%- include('../partials/topo', { titulo: 'Códigos de activação' }) %>
+
+<div class="grelha">
+  <div class="numero"><b><%= contagens.disponivel ?? 0 %></b><span>Disponíveis</span></div>
+  <div class="numero"><b><%= contagens.usado ?? 0 %></b><span>Usados</span></div>
+  <div class="numero"><b><%= contagens.revogado ?? 0 %></b><span>Revogados</span></div>
+</div>
+
+<div class="cartao">
+  <form method="get" class="filtros">
+    <div><label>Procurar</label><input type="search" name="q" value="<%= f.q %>" placeholder="Últimos 4 caracteres, nota, telefone…"></div>
+    <div><label>Estado</label>
+      <select name="estado"><option value="">Todos</option>
+        <% for (const e of ['disponivel','usado','revogado']) { %><option value="<%= e %>" <%= f.estado === e ? 'selected' : '' %>><%= e %></option><% } %>
+      </select></div>
+    <div><label>Produto</label>
+      <select name="produto"><option value="">Todos</option>
+        <% for (const p of produtos) { %><option value="<%= p.codigo %>" <%= f.produto === p.codigo ? 'selected' : '' %>><%= p.nome %></option><% } %>
+      </select></div>
+    <div class="curto"><button class="btn sec">Filtrar</button></div>
+  </form>
+</div>
+
+<div class="cartao">
+  <div class="topo" style="margin-bottom:12px">
+    <h2 style="margin:0"><%= total %> códigos</h2>
+    <div class="accoes">
+      <a class="btn sec" href="/admin/codigos/exportar.csv?<%= qs({ pagina: '' }) %>">Exportar CSV</a>
+      <a class="btn" href="/admin/codigos/gerar">+ Gerar códigos</a>
+    </div>
+  </div>
+  <div class="tabela-wrap"><table>
+    <thead><tr><th>Código</th><th>Tipo / produto</th><th>Estado</th><th>Validade</th><th>Nota</th><th>Criado</th><th>Usado por</th><th></th></tr></thead>
+    <tbody>
+    <% for (const c of codigos) { %>
+      <tr>
+        <td><code><%= c.mascara %></code></td>
+        <td><%= c.tipo === 'recuperacao' ? 'Recuperação' : (c.prod ? c.prod.nome : c.produto) %></td>
+        <td><span class="tag <%= c.estado === 'disponivel' ? 'publicada' : c.estado === 'usado' ? '' : 'erro' %>"><%= c.estado %></span></td>
+        <td><%= dataPt(c.validade_ate) %></td>
+        <td class="trunc"><%= c.nota || '' %></td>
+        <td><%= dataPt(c.criado_em) %></td>
+        <td><% if (c.estudante) { %><%= c.estudante.nome || '—' %><br><small><%= c.estudante.telefone || '' %> · <%= dataPt(c.usado_em) %></small><% } else { %>—<% } %></td>
+        <td>
+          <% if (c.estado !== 'revogado') { %>
+          <form method="post" action="/admin/codigos/<%= c.id %>/revogar" data-confirmar="<%= c.estado === 'usado' ? 'Revogar este código cancela a licença do estudante. Continuar?' : 'Revogar este código?' %>">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <% for (const k of ['estado','produto','q']) { %><input type="hidden" name="<%= k %>" value="<%= f[k] %>"><% } %>
+            <button class="btn perigo pequeno">Revogar</button>
+          </form>
+          <% } %>
+        </td>
+      </tr>
+    <% } %>
+    <% if (!codigos.length) { %><tr><td colspan="8" class="mute">Sem códigos.</td></tr><% } %>
+    </tbody>
+  </table></div>
+  <% if (paginas > 1) { %>
+  <div class="paginacao">
+    <% if (f.pagina > 1) { %><a class="btn sec pequeno" href="?<%= qs({ pagina: f.pagina - 1 }) %>">← Anterior</a><% } %>
+    <span class="mute">Página <%= f.pagina %> de <%= paginas %></span>
+    <% if (f.pagina < paginas) { %><a class="btn sec pequeno" href="?<%= qs({ pagina: f.pagina + 1 }) %>">Seguinte →</a><% } %>
+  </div>
+  <% } %>
+  <p class="mute">Os códigos guardam-se cifrados (hash): só se vêem completos no momento em que são gerados.</p>
+</div>
+
+<%- include('../partials/fim') %>

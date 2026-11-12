@@ -9,6 +9,8 @@ import { exigirAdmin } from '../seguranca';
 import { catalogoRouter, produtosRouter } from './catalogo';
 import { questoesRouter } from './questoes';
 import { importarRouter } from './importar';
+import { codigosRouter, recuperacaoRouter } from './codigos';
+import { pacotesRouter } from './pacotes';
 
 // Hash fixo para comparar quando o email não existe (o tempo de resposta não revela contas)
 const HASH_FALSO = bcrypt.hashSync('nao-existe-esta-conta', 12);
@@ -97,6 +99,9 @@ export function adminRouter() {
   r.use('/produtos', produtosRouter());
   r.use('/questoes', questoesRouter());
   r.use('/importar', importarRouter());
+  r.use('/codigos', codigosRouter());
+  r.use('/pacotes', pacotesRouter());
+  r.use('/estudantes', recuperacaoRouter());
 
   r.get('/estudantes', async (req, res) => {
     const q = String(req.query.q ?? '').trim();
@@ -105,7 +110,10 @@ export function adminRouter() {
       where,
       orderBy: { criado_em: 'desc' },
       take: 200,
-      include: { licencas: { select: { produto: true, revogada: true, valido_ate: true } } },
+      include: {
+        licencas: { select: { produto: true, revogada: true, valido_ate: true } },
+        _count: { select: { tokens: { where: { revogado: false } } } },
+      },
     });
     res.render('estudantes', { estudantes, q });
   });

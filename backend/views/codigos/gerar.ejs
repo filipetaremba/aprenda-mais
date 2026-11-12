@@ -1,0 +1,52 @@
+<%- include('../partials/topo', { titulo: 'Gerar códigos' }) %>
+
+<p><a href="/admin/codigos">← Voltar aos códigos</a></p>
+<%- include('../partials/erros', { erros }) %>
+
+<div class="duas">
+  <form class="cartao" method="post" action="/admin/codigos/gerar">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <div class="campo">
+      <label for="produto">Produto *</label>
+      <select id="produto" name="produto" required>
+        <option value="">—</option>
+        <% for (const p of produtos) { %><option value="<%= p.codigo %>" <%= v.produto === p.codigo ? 'selected' : '' %>><%= p.nome %> – <%= p.preco_mt %> MT</option><% } %>
+      </select>
+      <% if (!produtos.length) { %><div class="ajuda">Ainda não há produtos activos. <a href="/admin/produtos/novo">Cria um produto</a>.</div><% } %>
+    </div>
+    <div class="linha">
+      <div class="campo">
+        <label for="quantidade">Quantidade</label>
+        <input id="quantidade" type="number" name="quantidade" min="1" max="200" value="<%= v.quantidade %>">
+      </div>
+      <div class="campo">
+        <label for="validade">Válido até</label>
+        <input id="validade" type="date" name="validade" value="<%= v.validade %>">
+        <div class="ajuda">Fim da época de exames. Vazio = sem fim.</div>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="nota">Nota / referência do pagamento</label>
+      <input id="nota" type="text" name="nota" value="<%= v.nota %>" placeholder="ex.: pago por M-Pesa, ref. 8HJ2K9…">
+    </div>
+    <div class="campo">
+      <label for="telefone">Telefone do estudante (opcional)</label>
+      <input id="telefone" type="text" name="telefone" value="<%= v.telefone %>" placeholder="84 123 4567" inputmode="tel">
+      <div class="ajuda">Para abrir o WhatsApp directamente na conversa com o estudante.</div>
+    </div>
+    <button class="btn">Gerar</button>
+  </form>
+
+  <div class="cartao">
+    <h2>Como funciona</h2>
+    <ol>
+      <li>O estudante paga por M-Pesa/e-Mola para o número do Aprova+.</li>
+      <li>Confirmas o pagamento e geras aqui um código para o produto pago, com a referência na nota.</li>
+      <li>Envias o código por WhatsApp/SMS (há uma mensagem pronta).</li>
+      <li>Na app, o estudante escreve o código: a licença fica activa e os níveis pagos são descarregados.</li>
+    </ol>
+    <p class="mute">Cada código só pode ser usado uma vez. Se o estudante mudar de telemóvel, pode restaurar com o mesmo código + o mesmo telefone, ou com um código de recuperação (página Estudantes).</p>
+  </div>
+</div>
+
+<%- include('../partials/fim') %>

@@ -388,7 +388,7 @@ export async function analisar(
         resposta_confianca: q.resposta?.confianca ?? null,
         dificuldade: q.dificuldade ?? null,
         nivel: q.nivel ?? null,
-        ano,
+        ano: q.ano ?? ano,
         variante,
         numero_original: q.numero_original ?? null,
         fonte_ficheiro: fonte.ficheiro ?? null,
@@ -499,8 +499,12 @@ export async function gravar(db: PrismaClient, plano: Plano): Promise<ResultadoG
           });
       }
       for (const o of c.cursos) {
-        const curso = paraCodigo(o.nome);
-        await tx.curso.upsert({ where: { codigo: curso }, create: { codigo: curso, nome: o.nome }, update: {} });
+        const curso = o.curso ?? paraCodigo(o.nome);
+        await tx.curso.upsert({
+          where: { codigo: curso },
+          create: { codigo: curso, nome: o.nome, icone: o.icone ?? null },
+          update: o.icone ? { icone: o.icone } : {},
+        });
         const d = {
           slug: o.slug,
           curso,

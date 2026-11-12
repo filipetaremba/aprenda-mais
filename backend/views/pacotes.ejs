@@ -1,0 +1,44 @@
+<%- include('partials/topo', { titulo: 'Pacotes de conteúdo' }) %>
+
+<div class="cartao">
+  <p>
+    Um <b>pacote</b> é o que a app descarrega depois de activar um código: as questões <b>publicadas</b> dos níveis
+    <%= niveisGratis + 1 %>–10 de uma prova, com os níveis e os simulados, num .zip com versão e SHA-256.
+    Os níveis 1–<%= niveisGratis %> vão dentro da app (<code>npm run exportar:app</code>).
+  </p>
+  <p class="mute">Publica de novo sempre que publicares ou corrigires questões. Se nada mudou, não se cria nova versão.</p>
+</div>
+
+<div class="cartao">
+  <div class="tabela-wrap"><table>
+    <thead><tr><th>Prova</th><th class="num">Publicadas grátis (1–<%= niveisGratis %>)</th><th class="num">Publicadas pagas (<%= niveisGratis + 1 %>–10)</th><th>Última versão</th><th></th></tr></thead>
+    <tbody>
+    <% for (const p of linhas) { const u = p.versoes[0]; %>
+      <tr>
+        <td><code><%= p.codigo %></code><br><small><%= p.nome %></small></td>
+        <td class="num"><%= p.gratis %></td>
+        <td class="num"><%= p.pagas %></td>
+        <td>
+          <% if (u) { %>
+            <b>v<%= u.versao %></b> · <%= u.num_questoes %> questões · <%= Math.ceil(u.tamanho_bytes / 1024) %> KB<br>
+            <small><%= u.publicado_em.toLocaleString('pt-PT', { timeZone: 'Africa/Maputo' }) %> · <span title="<%= u.sha256 %>">sha256 <%= u.sha256.slice(0, 12) %>…</span></small>
+            <% if (p.versoes.length > 1) { %>
+              <details><summary class="mute">versões anteriores (<%= p.versoes.length - 1 %>)</summary>
+                <% for (const v of p.versoes.slice(1, 10)) { %><small>v<%= v.versao %> · <%= v.num_questoes %> q · <%= v.publicado_em.toLocaleDateString('pt-PT') %></small><br><% } %>
+              </details>
+            <% } %>
+          <% } else { %><span class="mute">nunca publicado</span><% } %>
+        </td>
+        <td>
+          <form method="post" action="/admin/pacotes/<%= encodeURIComponent(p.codigo) %>/publicar">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <button class="btn pequeno" <%= p.pagas ? '' : 'disabled title="Sem questões publicadas nos níveis pagos"' %>>Publicar prova</button>
+          </form>
+        </td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table></div>
+</div>
+
+<%- include('partials/fim') %>

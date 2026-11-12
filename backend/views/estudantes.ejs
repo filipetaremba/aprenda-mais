@@ -9,17 +9,24 @@
     </form>
   </div>
   <div class="tabela-wrap"><table>
-    <thead><tr><th>Nome</th><th>Telefone</th><th>Licenças</th><th>Registado em</th></tr></thead>
+    <thead><tr><th>Nome</th><th>Telefone</th><th>Licenças</th><th class="num">Telemóveis</th><th>Registado em</th><th></th></tr></thead>
     <tbody>
     <% for (const e of estudantes) { %>
       <tr>
         <td><%= e.nome || '—' %></td>
         <td><%= e.telefone || '—' %></td>
         <td><% for (const l of e.licencas) { %><span class="tag <%= l.revogada ? 'erro' : '' %>"><%= l.produto %></span> <% } %><%= e.licencas.length ? '' : '—' %></td>
+        <td class="num"><%= e._count.tokens %></td>
         <td><%= e.criado_em.toLocaleDateString('pt-PT') %></td>
+        <td>
+          <form method="post" action="/admin/estudantes/<%= e.id %>/recuperacao" data-confirmar="Gerar um código de recuperação para <%= e.nome || e.telefone || 'este estudante' %>?">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <button class="btn sec pequeno">Código de recuperação</button>
+          </form>
+        </td>
       </tr>
     <% } %>
-    <% if (!estudantes.length) { %><tr><td colspan="4" class="mute">Ainda não há estudantes. Aparecem aqui quando activam um código na app.</td></tr><% } %>
+    <% if (!estudantes.length) { %><tr><td colspan="6" class="mute">Ainda não há estudantes. Aparecem aqui quando activam um código na app.</td></tr><% } %>
     </tbody>
   </table></div>
 </div>

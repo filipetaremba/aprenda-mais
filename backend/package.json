@@ -10,13 +10,16 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx scripts/seed.ts",
-    "importar": "tsx scripts/importar.ts"
+    "importar": "tsx scripts/importar.ts",
+    "exportar:app": "tsx scripts/exportar-app.ts",
+    "chaves:gerar": "tsx scripts/gerar-chaves.ts"
   },
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "adm-zip": "^0.5.18",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "bcryptjs": "^3.0.3",
@@ -30,6 +33,7 @@
     "multer": "^2.5.0"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.6",
     "@types/express-session": "^1.19.0",
