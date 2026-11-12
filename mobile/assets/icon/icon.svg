@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Ícone completo (Play Store e Android antigo): fundo azul Aprova+ + capelo. -->
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4A88F0"/>
+      <stop offset="1" stop-color="#2A62C9"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#fundo)"/>
+  <g transform="translate(512 512) scale(1.18) translate(-512 -512)">
+    <ellipse cx="512" cy="700" rx="200" ry="26" fill="#000000" opacity="0.12"/>
+    <path d="M352 500 L352 628 Q512 712 672 628 L672 500 Q512 572 352 500 Z" fill="#DCE8FD"/>
+    <path d="M512 318 L800 448 L512 578 L224 448 Z" fill="#FFFFFF"/>
+    <path d="M512 578 L800 448 L800 462 L512 592 L224 462 L224 448 Z" fill="#C9DBFB"/>
+    <path d="M512 448 L726 500 L726 640" fill="none" stroke="#FFC53D" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="512" cy="448" r="20" fill="#FFC53D"/>
+    <rect x="708" y="628" width="36" height="66" rx="14" fill="#FFC53D"/>
+    <circle cx="700" cy="326" r="66" fill="#FFC53D"/>
+    <rect x="690" y="290" width="20" height="72" rx="10" fill="#FFFFFF"/>
+    <rect x="664" y="316" width="72" height="20" rx="10" fill="#FFFFFF"/>
+  </g>
+</svg>

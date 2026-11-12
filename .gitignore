@@ -14,3 +14,6 @@ Thumbs.db
 
 # Extracção de exames: repositório próprio (dados e PDFs fora deste repo)
 /ESTRACAO_EXAM/
+
+# APKs gerados para distribuir (não vão para o Git)
+/executaveis/

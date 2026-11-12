@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Ícone Aprova+: capelo de formatura com o "+" amarelo da marca.
+       Desenhado dentro da zona segura dos ícones adaptativos (círculo central de ~66%). -->
+  <!-- sombra suave -->
+  <ellipse cx="512" cy="700" rx="200" ry="26" fill="#000000" opacity="0.12"/>
+  <!-- base do capelo -->
+  <path d="M352 500 L352 628 Q512 712 672 628 L672 500 Q512 572 352 500 Z" fill="#DCE8FD"/>
+  <!-- tampo (losango) -->
+  <path d="M512 318 L800 448 L512 578 L224 448 Z" fill="#FFFFFF"/>
+  <path d="M512 578 L800 448 L800 462 L512 592 L224 462 L224 448 Z" fill="#C9DBFB"/>
+  <!-- borla -->
+  <path d="M512 448 L726 500 L726 640" fill="none" stroke="#FFC53D" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="512" cy="448" r="20" fill="#FFC53D"/>
+  <rect x="708" y="628" width="36" height="66" rx="14" fill="#FFC53D"/>
+  <!-- distintivo "+" -->
+  <circle cx="700" cy="326" r="66" fill="#FFC53D"/>
+  <rect x="690" y="290" width="20" height="72" rx="10" fill="#FFFFFF"/>
+  <rect x="664" y="316" width="72" height="20" rx="10" fill="#FFFFFF"/>
+</svg>

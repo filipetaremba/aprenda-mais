@@ -33,6 +33,7 @@ dev_dependencies:
   build_runner: ^2.17.1
   drift_dev: ^2.35.3
   mocktail: ^1.0.5
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -55,3 +56,12 @@ flutter:
           weight: 700
         - asset: assets/fonts/Poppins-ExtraBold.ttf
           weight: 800
+
+# Ícone da app (fonte: assets/icon/*.svg). Para regenerar: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#3B7BEA"
+  adaptive_icon_foreground: "assets/icon/foreground.png"
+  min_sdk_android: 21
