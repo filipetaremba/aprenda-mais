@@ -15,7 +15,8 @@
     "chaves:gerar": "tsx scripts/gerar-chaves.ts",
     "produtos:padrao": "tsx scripts/produtos-padrao.ts",
     "provas:partilhar": "tsx scripts/provas-partilhar.ts",
-    "imagens:optimizar": "tsx scripts/imagens-optimizar.ts"
+    "imagens:optimizar": "tsx scripts/imagens-optimizar.ts",
+    "niveis:redistribuir": "tsx scripts/niveis-redistribuir.ts"
   },
   "author": "",
   "license": "ISC",

@@ -49,6 +49,10 @@ void main() {
     final upBio = await repo.prova('UP-BIO');
     expect(upBio!.partilhada, isTrue);
     expect(upBio.avisoPartilha, contains('UEM'));
+    // O nível 1 de cada prova tem 20 questões
+    for (final prova in comQuestoes) {
+      expect((await repo.questoesPorNivel(prova))[1], 20, reason: prova);
+    }
     // Só níveis grátis no APK
     for (final prova in comQuestoes) {
       expect((await repo.questoesPorNivel(prova)).keys.every((n) => n <= 2), isTrue, reason: prova);
