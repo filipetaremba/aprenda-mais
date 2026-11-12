@@ -1,0 +1,34 @@
+<%- include('../partials/topo', { titulo: 'Importar JSON' }) %>
+
+<div class="duas">
+  <div class="cartao">
+    <h2>Enviar ficheiros</h2>
+    <% if (erro) { %><div class="flash erro"><%= erro %></div><% } %>
+    <form method="post" enctype="multipart/form-data" action="/admin/importar">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="campo">
+        <label for="ficheiros">Ficheiros JSON (e as imagens que eles referem)</label>
+        <input id="ficheiros" type="file" name="ficheiros" multiple accept=".json,image/png,image/jpeg,image/webp" required>
+        <div class="ajuda">Podes escolher vários de uma vez. Nada é gravado antes de veres o relatório.</div>
+      </div>
+      <div class="campo">
+        <label class="check"><input type="checkbox" name="substituir"> Substituir questões que já existem</label>
+        <div class="ajuda">Por omissão, as questões já existentes ficam como estão (podem ter sido editadas aqui no admin).</div>
+      </div>
+      <button class="btn">Analisar</button>
+    </form>
+  </div>
+
+  <div class="cartao">
+    <h2>Formato</h2>
+    <p>O formato é o de <code>shared/content.schema.json</code> (o mesmo dos seeds do ESTRACAO_EXAM):</p>
+    <ul>
+      <li><b>Catálogo:</b> <code>grupos_exame.json</code>, <code>disciplinas.json</code>, <code>instituicoes.json</code>, <code>temas.json</code>, <code>provas.json</code>, <code>cursos.json</code> (listas; o nome do ficheiro diz o tipo).</li>
+      <li><b>Questões:</b> um ficheiro por exame, <code>{ "prova": "UEM-MAT2", "fonte": {…}, "questoes": [ … ] }</code>.</li>
+    </ul>
+    <p class="mute">Questões importadas entram como <b>revista</b> (ou <b>rascunho</b> se não tiverem resposta). Publica-as depois na página Questões.</p>
+    <p class="mute">Para importar a pasta inteira dos seeds, usa a linha de comandos:<br><code>npm run importar -- ..\ESTRACAO_EXAM\seeds --gravar</code></p>
+  </div>
+</div>
+
+<%- include('../partials/fim') %>

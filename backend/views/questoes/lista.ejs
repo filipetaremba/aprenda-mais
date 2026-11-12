@@ -1,0 +1,86 @@
+<%- include('../partials/topo', { titulo: 'Questões' }) %>
+
+<div class="cartao">
+  <form method="get" class="filtros">
+    <div><label>Procurar</label><input type="search" name="q" value="<%= f.q %>" placeholder="Código ou enunciado"></div>
+    <div><label>Prova</label>
+      <select name="prova"><option value="">Todas</option>
+        <% for (const p of provas) { %><option value="<%= p.codigo %>" <%= f.prova === p.codigo ? 'selected' : '' %>><%= p.codigo %></option><% } %>
+      </select></div>
+    <div><label>Nível</label>
+      <select name="nivel"><option value="">Todos</option>
+        <% for (const n of niveis) { %><option value="<%= n %>" <%= f.nivel === String(n) ? 'selected' : '' %>><%= n %></option><% } %>
+        <option value="sem" <%= f.nivel === 'sem' ? 'selected' : '' %>>Sem nível</option>
+      </select></div>
+    <div><label>Estado</label>
+      <select name="estado"><option value="">Todos</option>
+        <% for (const e of estados) { %><option value="<%= e %>" <%= f.estado === e ? 'selected' : '' %>><%= LABEL_ESTADO[e] %></option><% } %>
+      </select></div>
+    <div><label>Tema</label>
+      <select name="tema"><option value="">Todos</option>
+        <% for (const t of temas) { %><option value="<%= t.codigo %>" <%= f.tema === t.codigo ? 'selected' : '' %>><%= t.nome %> (<%= t.disciplina %>)</option><% } %>
+      </select></div>
+    <div class="curto"><label class="check" style="height:42px"><input type="checkbox" name="alertas" value="1" <%= f.alertas === '1' ? 'checked' : '' %>> Com alertas</label></div>
+    <div class="curto"><button class="btn sec">Filtrar</button></div>
+  </form>
+</div>
+
+<div class="cartao">
+  <div class="topo" style="margin-bottom:12px">
+    <h2 style="margin:0"><%= total %> questões</h2>
+    <div class="accoes">
+      <a class="btn" href="/admin/questoes/nova<%= f.prova ? '?prova=' + encodeURIComponent(f.prova) : '' %>">+ Nova questão</a>
+    </div>
+  </div>
+
+  <form method="post" action="/admin/questoes/estado" id="form-lote">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <% for (const k of ['q','prova','nivel','estado','tema','alertas']) { %><input type="hidden" name="<%= k %>" value="<%= f[k] %>"><% } %>
+    <div class="filtros" style="margin-bottom:12px">
+      <div class="curto">
+        <select name="novo_estado" style="width:auto" aria-label="Novo estado">
+          <option value="publicada">Publicar</option>
+          <option value="revista">Marcar como revista</option>
+          <option value="rascunho">Passar a rascunho</option>
+        </select>
+      </div>
+      <div class="curto"><button class="btn sec" name="todas" value="0">Aplicar às seleccionadas</button></div>
+      <div class="curto"><button class="btn sec" name="todas" value="1" data-confirmar="Aplicar às <%= total %> questões deste filtro?">Aplicar a todas as <%= total %> filtradas</button></div>
+    </div>
+
+    <div class="tabela-wrap"><table>
+      <thead><tr>
+        <th><input type="checkbox" data-todas aria-label="Seleccionar todas"></th>
+        <th>Código</th><th>Enunciado</th><th>Prova · nível</th><th>Tipo</th><th>Estado</th><th></th>
+      </tr></thead>
+      <tbody>
+      <% for (const q of questoes) { %>
+        <tr>
+          <td><input type="checkbox" name="codigos" value="<%= q.codigo %>"></td>
+          <td><a href="/admin/questoes/<%= encodeURIComponent(q.codigo) %>"><code><%= q.codigo %></code></a></td>
+          <td class="trunc"><%= q.enunciado %></td>
+          <td><%= q.ligacoes %></td>
+          <td><%= q.tipo === 'verdadeiro_falso' ? 'V/F' : 'Escolha' %></td>
+          <td><span class="tag <%= q.estado %>"><%= LABEL_ESTADO[q.estado] %></span></td>
+          <td>
+            <% if (q.semResposta) { %><span class="tag erro">sem resposta</span><% } %>
+            <% if (q.numAlertas) { %><span class="tag aviso" title="Alertas da extracção"><%= q.numAlertas %> alerta(s)</span><% } %>
+            <% if (q.resposta_origem === 'proposta_ia') { %><span class="tag" title="Resposta proposta pela IA (confiança: <%= q.resposta_confianca || '?' %>)">IA <%= q.resposta_confianca || '' %></span><% } %>
+          </td>
+        </tr>
+      <% } %>
+      <% if (!questoes.length) { %><tr><td colspan="7" class="mute">Nenhuma questão com estes filtros.</td></tr><% } %>
+      </tbody>
+    </table></div>
+  </form>
+
+  <% if (paginas > 1) { %>
+  <div class="paginacao">
+    <% if (f.pagina > 1) { %><a class="btn sec pequeno" href="?<%= qs({ pagina: f.pagina - 1 }) %>">← Anterior</a><% } %>
+    <span class="mute">Página <%= f.pagina %> de <%= paginas %></span>
+    <% if (f.pagina < paginas) { %><a class="btn sec pequeno" href="?<%= qs({ pagina: f.pagina + 1 }) %>">Seguinte →</a><% } %>
+  </div>
+  <% } %>
+</div>
+
+<%- include('../partials/fim') %>

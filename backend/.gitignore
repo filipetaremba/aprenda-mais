@@ -11,3 +11,9 @@ coverage/
 .supabase/
 supabase/.temp/
 *.log
+
+# Base de dados local e ficheiros gerados
+prisma/*.db
+prisma/*.db-journal
+storage/
+storage-test/

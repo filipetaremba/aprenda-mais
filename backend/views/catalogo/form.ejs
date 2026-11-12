@@ -1,0 +1,50 @@
+<%- include('../partials/topo', { titulo: tabs ? 'Catálogo' : ent.titulo }) %>
+<%- include('../partials/abas-catalogo') %>
+
+<div class="cartao" style="max-width:760px">
+  <h2><%= criar ? 'Novo(a) ' + ent.singular : 'Editar ' + ent.singular %><% if (!criar) { %> <code><%= codigo %></code><% } %></h2>
+  <%- include('../partials/erros', { erros }) %>
+
+  <form method="post" action="<%= base %>/<%= criar ? 'novo' : encodeURIComponent(codigo) %>">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <% for (const c of ent.campos) { const v = valores[c.nome] ?? ''; const id = 'f_' + c.nome; %>
+      <div class="campo">
+        <% if (c.tipo === 'bool') { %>
+          <label class="check"><input type="checkbox" name="<%= c.nome %>" <%= (v === true || v === 'on') ? 'checked' : '' %>> <%= c.label %></label>
+        <% } else { %>
+          <label for="<%= id %>"><%= c.label %><%= c.obrigatorio ? ' *' : '' %></label>
+          <% if (c.chave && !criar) { %>
+            <input id="<%= id %>" type="text" value="<%= codigo %>" disabled>
+          <% } else if (c.tipo === 'ref' || c.tipo === 'opcoes') { %>
+            <select id="<%= id %>" name="<%= c.nome %>" <%= c.obrigatorio ? 'required' : '' %>>
+              <% if (!c.obrigatorio || c.tipo === 'ref') { %><option value="">—</option><% } %>
+              <% for (const o of (c.tipo === 'ref' ? opcoes[c.nome] : c.opcoes.map(x => ({ valor: x, texto: x })))) { %>
+                <option value="<%= o.valor %>" <%= String(v) === o.valor ? 'selected' : '' %>><%= o.texto %></option>
+              <% } %>
+            </select>
+          <% } else if (c.tipo === 'textarea' || c.tipo === 'lista') { %>
+            <textarea id="<%= id %>" name="<%= c.nome %>" rows="<%= c.tipo === 'lista' ? 4 : 3 %>"><%= v %></textarea>
+          <% } else { %>
+            <input id="<%= id %>" type="<%= c.tipo === 'numero' ? 'number' : 'text' %>" name="<%= c.nome %>" value="<%= v %>" <%= c.obrigatorio ? 'required' : '' %>>
+          <% } %>
+        <% } %>
+        <% if (c.ajuda) { %><div class="ajuda"><%= c.ajuda %></div><% } %>
+      </div>
+    <% } %>
+    <div class="topo" style="margin:0">
+      <div class="accoes">
+        <button class="btn">Gravar</button>
+        <a class="btn sec" href="<%= base %>">Cancelar</a>
+      </div>
+    </div>
+  </form>
+
+  <% if (!criar) { %>
+  <form method="post" action="<%= base %>/<%= encodeURIComponent(codigo) %>/apagar" data-confirmar="Apagar <%= codigo %>? Esta acção não se desfaz." style="margin-top:18px">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <button class="btn perigo pequeno">Apagar</button>
+  </form>
+  <% } %>
+</div>
+
+<%- include('../partials/fim') %>

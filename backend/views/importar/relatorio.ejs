@@ -1,0 +1,66 @@
+<%- include('../partials/topo', { titulo: 'Importar JSON · relatório' }) %>
+
+<div class="cartao">
+  <% if (relatorio.ok) { %>
+    <div class="flash ok">Sem erros. Revê o resumo e confirma para gravar.</div>
+  <% } else { %>
+    <div class="flash erro"><%= relatorio.erros.length %> erro(s): nada será gravado. Corrige os ficheiros e envia de novo.</div>
+  <% } %>
+
+  <div class="grelha">
+    <div class="numero"><b><%= relatorio.questoes.aGravar %></b><span>Questões a gravar</span></div>
+    <div class="numero"><b><%= relatorio.questoes.novas %></b><span>Novas</span></div>
+    <div class="numero"><b><%= relatorio.questoes.existentes %></b><span>Já existem</span></div>
+    <% for (const [tipo, n] of Object.entries(relatorio.catalogo)) { if (n) { %>
+      <div class="numero"><b><%= n %></b><span><%= tipo.replace('_', ' ') %></span></div>
+    <% } } %>
+  </div>
+
+  <% if (id) { %>
+  <form method="post" action="/admin/importar/confirmar" style="display:flex;gap:8px">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <input type="hidden" name="id" value="<%= id %>">
+    <button class="btn ok">Confirmar e gravar</button>
+    <a class="btn sec" href="/admin/importar">Cancelar</a>
+  </form>
+  <% } else { %>
+    <a class="btn sec" href="/admin/importar">Voltar</a>
+  <% } %>
+</div>
+
+<% if (relatorio.erros.length) { %>
+<div class="cartao">
+  <h2>Erros (<%= relatorio.erros.length %>)</h2>
+  <div class="tabela-wrap"><table>
+    <thead><tr><th>Ficheiro</th><th>Onde</th><th>Problema</th></tr></thead>
+    <tbody><% for (const e of relatorio.erros.slice(0, 300)) { %><tr><td><%= e.ficheiro %></td><td><code><%= e.onde || '—' %></code></td><td><%= e.texto %></td></tr><% } %></tbody>
+  </table></div>
+</div>
+<% } %>
+
+<% if (relatorio.avisos.length) { %>
+<div class="cartao">
+  <h2>Avisos (<%= relatorio.avisos.length %>)</h2>
+  <div class="tabela-wrap"><table>
+    <tbody><% for (const a of relatorio.avisos.slice(0, 300)) { %><tr><td><%= a.ficheiro %></td><td><code><%= a.onde || '—' %></code></td><td><%= a.texto %></td></tr><% } %></tbody>
+  </table></div>
+</div>
+<% } %>
+
+<div class="duas">
+  <div class="cartao">
+    <h2>Ficheiros</h2>
+    <table><tbody><% for (const f of relatorio.ficheiros) { %><tr><td><%= f.nome %></td><td><%= f.tipo %></td><td class="num"><%= f.registos %></td></tr><% } %></tbody></table>
+  </div>
+  <% const provasR = Object.keys(relatorio.porProvaNivel); if (provasR.length) { %>
+  <div class="cartao">
+    <h2>Questões por prova e nível</h2>
+    <div class="tabela-wrap"><table>
+      <thead><tr><th>Prova</th><% for (let n = 1; n <= 10; n++) { %><th class="num"><%= n %></th><% } %><th class="num">—</th></tr></thead>
+      <tbody><% for (const p of provasR) { %><tr><td><%= p %></td><% for (let n = 1; n <= 10; n++) { %><td class="num"><%= relatorio.porProvaNivel[p][n] ?? '' %></td><% } %><td class="num"><%= relatorio.porProvaNivel[p]['—'] ?? '' %></td></tr><% } %></tbody>
+    </table></div>
+  </div>
+  <% } %>
+</div>
+
+<%- include('../partials/fim') %>

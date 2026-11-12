@@ -1,0 +1,27 @@
+<%- include('partials/topo', { titulo: 'Estudantes' }) %>
+
+<div class="cartao">
+  <div class="topo" style="margin-bottom:12px">
+    <h2 style="margin:0">Estudantes <small>(<%= estudantes.length %><%= estudantes.length === 200 ? '+' : '' %>)</small></h2>
+    <form method="get" class="filtros">
+      <input type="search" name="q" value="<%= q %>" placeholder="Nome ou telefone…">
+      <button class="btn sec curto">Procurar</button>
+    </form>
+  </div>
+  <div class="tabela-wrap"><table>
+    <thead><tr><th>Nome</th><th>Telefone</th><th>Licenças</th><th>Registado em</th></tr></thead>
+    <tbody>
+    <% for (const e of estudantes) { %>
+      <tr>
+        <td><%= e.nome || '—' %></td>
+        <td><%= e.telefone || '—' %></td>
+        <td><% for (const l of e.licencas) { %><span class="tag <%= l.revogada ? 'erro' : '' %>"><%= l.produto %></span> <% } %><%= e.licencas.length ? '' : '—' %></td>
+        <td><%= e.criado_em.toLocaleDateString('pt-PT') %></td>
+      </tr>
+    <% } %>
+    <% if (!estudantes.length) { %><tr><td colspan="4" class="mute">Ainda não há estudantes. Aparecem aqui quando activam um código na app.</td></tr><% } %>
+    </tbody>
+  </table></div>
+</div>
+
+<%- include('partials/fim') %>

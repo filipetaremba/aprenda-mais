@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar · Aprova+ Admin</title>
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+<div class="login">
+  <div class="cartao">
+    <div class="marca"><span>A+</span> Aprova+ Admin</div>
+    <% for (const f of flash) { %><div class="flash <%= f.tipo %>"><%= f.texto %></div><% } %>
+    <% if (erro) { %><div class="flash erro"><%= erro %></div><% } %>
+    <form method="post" action="/admin/login">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <input type="hidden" name="voltar" value="<%= voltar %>">
+      <div class="campo">
+        <label for="email">Email</label>
+        <input id="email" type="email" name="email" value="<%= email %>" autocomplete="username" required autofocus>
+      </div>
+      <div class="campo">
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn grande" style="width:100%;justify-content:center">Entrar</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

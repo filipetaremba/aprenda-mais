@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aprova.mz/schema/content.schema.json",
+  "title": "Conteúdo Aprova+",
+  "description": "Formato do conteúdo (catálogo e questões) partilhado pelos seeds (ESTRACAO_EXAM), pelo backend e pelo importador da app. Fonte da verdade.",
+  "anyOf": [{ "$ref": "#/$defs/ficheiro_questoes" }, { "$ref": "#/$defs/catalogo" }],
+
+  "$defs": {
+    "codigo": { "type": "string", "pattern": "^[A-Z0-9]+(-[A-Z0-9]+)*$" },
+    "texto_opcional": { "type": ["string", "null"] },
+    "lista_texto": { "type": "array", "items": { "type": "string" } },
+
+    "catalogo": {
+      "description": "Um ou mais tipos de catálogo num só ficheiro. Os seeds usam um ficheiro por tipo (instituicoes.json = só a lista).",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "grupos_exame": { "type": "array", "items": { "$ref": "#/$defs/grupo_exame" } },
+        "instituicoes": { "type": "array", "items": { "$ref": "#/$defs/instituicao" } },
+        "disciplinas": { "type": "array", "items": { "$ref": "#/$defs/disciplina" } },
+        "temas": { "type": "array", "items": { "$ref": "#/$defs/tema" } },
+        "provas": { "type": "array", "items": { "$ref": "#/$defs/prova" } },
+        "cursos": { "type": "array", "items": { "$ref": "#/$defs/curso" } }
+      }
+    },
+
+    "grupo_exame": {
+      "type": "object",
+      "required": ["codigo", "nome"],
+      "properties": {
+        "codigo": { "$ref": "#/$defs/codigo" },
+        "nome": { "type": "string", "minLength": 1 },
+        "instituicoes": { "$ref": "#/$defs/lista_texto" },
+        "pasta_origem": { "type": "string" },
+        "tem_gabarito": { "type": "boolean" }
+      }
+    },
+
+    "instituicao": {
+      "type": "object",
+      "required": ["codigo", "sigla", "nome", "grupo_exame"],
+      "properties": {
+        "codigo": { "$ref": "#/$defs/codigo" },
+        "sigla": { "type": "string", "minLength": 1 },
+        "nome": { "type": "string", "minLength": 1 },
+        "grupo_exame": { "$ref": "#/$defs/codigo" },
+        "provincias": { "$ref": "#/$defs/lista_texto" },
+        "edital": {
+          "type": ["object", "null"],
+          "properties": { "ficheiro": { "type": "string" }, "ano": { "type": ["integer", "null"] } }
+        }
+      }
+    },
+
+    "disciplina": {
+      "type": "object",
+      "required": ["codigo", "nome"],
+      "properties": {
+        "codigo": { "$ref": "#/$defs/codigo" },
+        "nome": { "type": "string", "minLength": 1 },
+        "aliases": { "$ref": "#/$defs/lista_texto" },
+        "icone": { "type": ["string", "null"] }
+      }
+    },
+
+    "tema": {
+      "type": "object",
+      "required": ["codigo", "disciplina", "nome"],
+      "properties": {
+        "codigo": { "$ref": "#/$defs/codigo" },
+        "disciplina": { "$ref": "#/$defs/codigo" },
+        "nome": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "prova": {
+      "description": "Grupo de exame + disciplina (+ variante). Ex.: UEM-MAT2.",
+      "type": "object",
+      "required": ["codigo", "grupo_exame", "disciplina", "nome"],
+      "properties": {
+        "codigo": { "$ref": "#/$defs/codigo" },
+        "grupo_exame": { "$ref": "#/$defs/codigo" },
+        "disciplina": { "$ref": "#/$defs/codigo" },
+        "variante": { "type": ["string", "null"] },
+        "tipo": { "enum": ["escrita", "pratica"] },
+        "nome": { "type": "string", "minLength": 1 },
+        "duracao_min": { "type": ["integer", "null"], "minimum": 1 },
+        "num_questoes": { "type": ["integer", "null"], "minimum": 1 },
+        "num_alternativas": { "type": ["integer", "null"], "minimum": 2, "maximum": 5 },
+        "nota": { "type": "string" }
+      }
+    },
+
+    "curso": {
+      "description": "Curso numa instituição (no backend chama-se oferta).",
+      "type": "object",
+      "required": ["codigo", "slug", "instituicao", "nome", "provas"],
+      "properties": {
+        "codigo": { "$ref": "#/$defs/codigo" },
+        "slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+        "instituicao": { "$ref": "#/$defs/codigo" },
+        "nome": { "type": "string", "minLength": 1 },
+        "nome_original": { "type": "string" },
+        "faculdade": { "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/lista_texto" }] },
+        "local": { "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/lista_texto" }] },
+        "regimes": { "$ref": "#/$defs/lista_texto" },
+        "provas": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/codigo" },
+              {
+                "type": "object",
+                "required": ["prova"],
+                "properties": {
+                  "prova": { "$ref": "#/$defs/codigo" },
+                  "peso": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 }
+                }
+              }
+            ]
+          }
+        },
+        "modelo_exame": { "type": ["string", "null"] },
+        "vagas": { "type": "array" },
+        "fonte": { "type": "object" }
+      }
+    },
+
+    "ficheiro_questoes": {
+      "description": "Um ficheiro por exame: questoes/<GRUPO>/<PROVA>/<ANO>[-VARIANTE].json",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prova", "questoes"],
+      "properties": {
+        "prova": { "$ref": "#/$defs/codigo" },
+        "fonte": {
+          "type": "object",
+          "properties": {
+            "ficheiro": { "type": "string" },
+            "ano": { "type": ["integer", "null"] },
+            "variante": { "type": ["string", "null"] },
+            "epoca": { "type": ["string", "null"] },
+            "gabarito_ficheiro": { "type": ["string", "null"] },
+            "paginas": { "type": "string" },
+            "nota": { "type": "string" }
+          }
+        },
+        "textos_base": {
+          "description": "Textos de leitura partilhados, por id local (ex.: texto-1).",
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/texto_base" }
+        },
+        "questoes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/questao" } }
+      }
+    },
+
+    "texto_base": {
+      "type": "object",
+      "required": ["texto"],
+      "properties": {
+        "titulo": { "type": ["string", "null"] },
+        "texto": { "type": "string", "minLength": 1 },
+        "fonte": { "type": ["string", "null"] }
+      }
+    },
+
+    "questao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["codigo", "tipo", "enunciado", "alternativas", "resposta", "explicacao"],
+      "properties": {
+        "codigo": {
+          "description": "Estável: nunca muda nem se reutiliza. Ex.: UEM-MAT2-2025-005",
+          "type": "string",
+          "pattern": "^[A-Z0-9]+(-[A-Z0-9]+)*-\\d{3,4}$"
+        },
+        "numero_original": { "type": ["integer", "null"], "minimum": 1 },
+        "pagina": { "type": ["integer", "null"], "minimum": 1 },
+        "tipo": { "enum": ["escolha_multipla", "verdadeiro_falso"] },
+        "tema": { "type": ["string", "null"] },
+        "texto_base": { "type": ["string", "null"] },
+        "enunciado": { "type": "string", "minLength": 1, "description": "Markdown simples + LaTeX ($...$ / $$...$$)" },
+        "imagens": { "$ref": "#/$defs/lista_texto" },
+        "dica": { "type": ["string", "null"], "description": "Opcional. Não penaliza o estudante." },
+        "alternativas": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["letra", "texto"],
+            "properties": {
+              "letra": { "type": "string", "pattern": "^([A-E]|V|F)$" },
+              "texto": { "type": ["string", "null"] },
+              "imagem": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "resposta": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["letra"],
+          "properties": {
+            "letra": { "type": ["string", "null"], "pattern": "^([A-E]|V|F)$" },
+            "origem": { "enum": ["gabarito_oficial", "proposta_ia", null] },
+            "confianca": { "enum": ["alta", "media", "baixa", null] }
+          }
+        },
+        "explicacao": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["texto"],
+          "properties": {
+            "texto": { "type": ["string", "null"] },
+            "origem": { "type": ["string", "null"] },
+            "revisto": { "type": "boolean" }
+          }
+        },
+        "dificuldade": { "type": ["integer", "null"], "minimum": 1, "maximum": 5 },
+        "nivel": { "type": ["integer", "null"], "minimum": 1, "maximum": 10 },
+        "estado": {
+          "description": "Seeds: extraida → revista → aprovada (ou removida). Backend: rascunho → revista → publicada.",
+          "enum": ["extraida", "revista", "aprovada", "removida", "rascunho", "publicada"]
+        },
+        "alertas": { "$ref": "#/$defs/lista_texto" }
+      }
+    }
+  }
+}

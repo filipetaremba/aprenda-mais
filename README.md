@@ -1,17 +1,30 @@
-﻿# App Estudo
+﻿# Aprova+
 
-Aplicação leve para ajudar estudantes a prepararem-se para exames de admissão.
+App offline para preparar os exames de admissão às universidades em Moçambique.
 
 ## Estrutura
 
-- `mobile/`: aplicação Flutter. O código da tela inicial fica em `mobile/lib/main.dart`.
-- `backend/`: estrutura destinada ao Supabase, às migrações SQL, às funções e aos dados iniciais.
-- `conteudo/`: perguntas e ferramentas de importação.
-- `painel/`: espaço reservado para o futuro painel web de administração.
+- `mobile/`: aplicação Flutter (Android primeiro).
+- `backend/`: API + admin (Express + Prisma + SQLite). Ver [backend/README.md](backend/README.md).
+- `shared/content.schema.json`: formato do conteúdo (catálogo e questões), partilhado pelos seeds, pelo backend e pela app. É a fonte da verdade.
+- `content/`: guia para preparar novas perguntas.
+- `painel/`: reservado (o admin está dentro de `backend/`).
+- `ESTRACAO_EXAM/`: extracção dos exames (PDF → seeds JSON). Fica **fora deste repositório** (está no `.gitignore`).
+
+## Executar o backend
+
+```powershell
+cd backend
+npm install
+Copy-Item .env.example .env
+npm run db:migrate
+npm run db:seed
+npm run dev        # http://localhost:3000/admin
+```
 
 ## Executar a aplicação
 
-Com Flutter e Android SDK configurados, abra um emulador e execute na pasta `mobile/`:
+Com Flutter e Android SDK configurados, abre um emulador e corre na pasta `mobile/`:
 
 ```powershell
 cd mobile

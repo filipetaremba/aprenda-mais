@@ -11,3 +11,6 @@ Thumbs.db
 /build/
 /.idea/
 /*.iml
+
+# Extracção de exames: repositório próprio (dados e PDFs fora deste repo)
+/ESTRACAO_EXAM/

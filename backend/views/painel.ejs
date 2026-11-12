@@ -1,0 +1,37 @@
+<%- include('partials/topo', { titulo: 'Painel' }) %>
+
+<div class="grelha">
+  <div class="numero"><b><%= totalQuestoes %></b><span>Questões</span></div>
+  <div class="numero"><b><%= estados.publicada ?? 0 %></b><span>Publicadas</span></div>
+  <div class="numero"><b><%= estados.revista ?? 0 %></b><span>Revistas (por publicar)</span></div>
+  <div class="numero"><b><%= estados.rascunho ?? 0 %></b><span>Rascunhos</span></div>
+  <div class="numero"><b><%= provas %></b><span>Provas</span></div>
+  <div class="numero"><b><%= instituicoes %></b><span>Instituições</span></div>
+  <div class="numero"><b><%= ofertas %></b><span>Ofertas (cursos)</span></div>
+  <div class="numero"><b><%= produtos %></b><span>Produtos</span></div>
+  <div class="numero"><b><%= estudantes %></b><span>Estudantes</span></div>
+  <div class="numero"><b><%= licencas %></b><span>Licenças activas</span></div>
+</div>
+
+<div class="cartao">
+  <h2>Questões por prova</h2>
+  <% if (!porProva.length) { %>
+    <p class="mute">Ainda não há questões. <a href="/admin/importar">Importa um JSON</a> ou <a href="/admin/questoes/nova">cria uma questão</a>.</p>
+  <% } else { %>
+  <div class="tabela-wrap"><table>
+    <thead><tr><th>Prova</th><th class="num">Total</th><th class="num">Publicadas</th><th></th></tr></thead>
+    <tbody>
+    <% for (const p of porProva) { %>
+      <tr>
+        <td><a href="/admin/questoes?prova=<%= encodeURIComponent(p.prova) %>"><%= p.prova %></a></td>
+        <td class="num"><%= p.total %></td>
+        <td class="num"><%= p.publicadas %></td>
+        <td><a href="/admin/catalogo/niveis?prova=<%= encodeURIComponent(p.prova) %>">níveis</a></td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table></div>
+  <% } %>
+</div>
+
+<%- include('partials/fim') %>

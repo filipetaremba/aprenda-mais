@@ -1,0 +1,35 @@
+<%- include('../partials/topo', { titulo: tabs ? 'Catálogo' : ent.titulo }) %>
+<%- include('../partials/abas-catalogo') %>
+
+<div class="cartao">
+  <div class="topo" style="margin-bottom:12px">
+    <h2 style="margin:0"><%= ent.titulo %> <small>(<%= total %>)</small></h2>
+    <div class="accoes">
+      <form method="get" class="filtros">
+        <input type="search" name="q" value="<%= q %>" placeholder="Procurar…">
+        <button class="btn sec curto">Procurar</button>
+      </form>
+      <a class="btn" href="<%= base %>/novo">+ Novo</a>
+    </div>
+  </div>
+  <div class="tabela-wrap"><table>
+    <thead><tr>
+      <% for (const c of ent.colunas) { const campo = ent.campos.find(x => x.nome === c); %><th><%= campo ? campo.label : c %></th><% } %>
+      <th></th>
+    </tr></thead>
+    <tbody>
+      <% for (const l of linhas) { %>
+      <tr>
+        <% l.valores.forEach((v, i) => { %>
+          <td class="<%= i === 0 ? '' : 'trunc' %>"><% if (i === 0) { %><a href="<%= base %>/<%= encodeURIComponent(l.codigo) %>"><code><%= v %></code></a><% } else { %><%= v %><% } %></td>
+        <% }) %>
+        <td><a href="<%= base %>/<%= encodeURIComponent(l.codigo) %>">editar</a></td>
+      </tr>
+      <% } %>
+      <% if (!linhas.length) { %><tr><td colspan="<%= ent.colunas.length + 1 %>" class="mute">Sem registos.</td></tr><% } %>
+    </tbody>
+  </table></div>
+  <% if (total > linhas.length) { %><p class="mute">A mostrar <%= linhas.length %> de <%= total %>. Usa a procura para filtrar.</p><% } %>
+</div>
+
+<%- include('../partials/fim') %>

@@ -1,0 +1,40 @@
+<%- include('../partials/topo', { titulo: 'Catálogo' }) %>
+<%- include('../partials/abas-catalogo') %>
+
+<div class="cartao">
+  <div class="topo" style="margin-bottom:12px">
+    <h2 style="margin:0">Níveis da prova</h2>
+    <form method="get" class="filtros">
+      <select name="prova" data-submeter>
+        <% for (const p of provas) { %><option value="<%= p.codigo %>" <%= p.codigo === prova ? 'selected' : '' %>><%= p.codigo %> — <%= p.nome %></option><% } %>
+      </select>
+    </form>
+  </div>
+
+  <% if (!niveis.length) { %>
+    <p class="mute">Esta prova ainda não tem níveis.</p>
+  <% } else { %>
+  <form method="post" action="/admin/catalogo/niveis">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <input type="hidden" name="prova" value="<%= prova %>">
+    <div class="tabela-wrap"><table>
+      <thead><tr><th>Nível</th><th>Título</th><th>Descrição</th><th>Nota mínima (%)</th><th class="num">Questões</th></tr></thead>
+      <tbody>
+      <% niveis.forEach((n, i) => { %>
+        <tr>
+          <td><b><%= n.numero %></b><input type="hidden" name="niveis[<%= i %>][numero]" value="<%= n.numero %>"></td>
+          <td><input type="text" name="niveis[<%= i %>][titulo]" value="<%= n.titulo %>"></td>
+          <td><input type="text" name="niveis[<%= i %>][descricao]" value="<%= n.descricao ?? '' %>"></td>
+          <td style="width:140px"><input type="number" min="0" max="100" name="niveis[<%= i %>][nota_minima]" value="<%= n.nota_minima ?? '' %>" placeholder="padrão"></td>
+          <td class="num"><a href="/admin/questoes?prova=<%= encodeURIComponent(prova) %>&nivel=<%= n.numero %>"><%= contagens[n.numero] ?? 0 %></a></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table></div>
+    <p class="mute">Vazio = nota mínima padrão (NOTA_MINIMA_PADRAO, 70%). Questões sem nível: <%= contagens[0] ?? 0 %>.</p>
+    <button class="btn">Gravar níveis</button>
+  </form>
+  <% } %>
+</div>
+
+<%- include('../partials/fim') %>

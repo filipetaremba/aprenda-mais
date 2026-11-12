@@ -1,0 +1,17 @@
+<%- include('../partials/topo', { titulo: 'Importação concluída' }) %>
+
+<div class="cartao">
+  <div class="flash ok">Gravado com sucesso.</div>
+  <div class="grelha">
+    <div class="numero"><b><%= resultado.questoes %></b><span>Questões</span></div>
+    <div class="numero"><b><%= resultado.textos_base %></b><span>Textos base</span></div>
+    <div class="numero"><b><%= resultado.imagens %></b><span>Imagens copiadas</span></div>
+    <% for (const [tipo, n] of Object.entries(resultado.catalogo)) { if (n) { %>
+      <div class="numero"><b><%= n %></b><span><%= tipo.replace('_', ' ') %></span></div>
+    <% } } %>
+  </div>
+  <a class="btn" href="/admin/questoes?estado=revista">Ver questões por publicar</a>
+  <a class="btn sec" href="/admin/importar">Importar mais</a>
+</div>
+
+<%- include('../partials/fim') %>

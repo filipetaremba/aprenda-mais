@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= titulo %> · Aprova+ Admin</title>
+  <link rel="stylesheet" href="/static/css/admin.css">
+  <% if (typeof katex !== 'undefined' && katex) { %>
+  <link rel="stylesheet" href="/static/katex/katex.min.css">
+  <script defer src="/static/katex/katex.min.js"></script>
+  <script defer src="/static/katex/contrib/auto-render.min.js"></script>
+  <% } %>
+  <script defer src="/static/js/admin.js"></script>
+</head>
+<body>
+<% if (admin) { %>
+<div class="app">
+  <aside class="lado">
+    <div class="marca"><span>A+</span> Aprova+</div>
+    <nav>
+      <% const menu = [['/admin','Painel','📊'],['/admin/catalogo','Catálogo','🏛️'],['/admin/questoes','Questões','📝'],['/admin/produtos','Produtos','🏷️'],['/admin/estudantes','Estudantes','🎓'],['/admin/importar','Importar JSON','📥']]; %>
+      <% for (const [href, nome, icone] of menu) { const activo = href === '/admin' ? caminho === '/admin' || caminho === '/admin/' : caminho.startsWith(href); %>
+        <a href="<%= href %>" class="<%= activo ? 'activo' : '' %>"><span><%= icone %></span><%= nome %></a>
+      <% } %>
+    </nav>
+  </aside>
+  <main class="principal">
+    <div class="topo">
+      <h1><%= titulo %></h1>
+      <div class="quem">
+        <%= admin.email %>
+        <form method="post" action="/admin/logout">
+          <input type="hidden" name="_csrf" value="<%= csrf %>">
+          <button class="btn sec pequeno">Sair</button>
+        </form>
+      </div>
+    </div>
+<% } else { %>
+<div class="app">
+  <main class="principal">
+    <div class="topo"><h1><%= titulo %></h1></div>
+<% } %>
+    <% for (const f of flash) { %><div class="flash <%= f.tipo %>"><%= f.texto %></div><% } %>

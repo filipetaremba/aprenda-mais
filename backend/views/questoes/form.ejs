@@ -1,0 +1,161 @@
+<%- include('../partials/topo', { titulo: criar ? 'Nova questão' : 'Editar questão', katex: true }) %>
+
+<p><a href="/admin/questoes">← Voltar às questões</a></p>
+<%- include('../partials/erros', { erros }) %>
+
+<div class="duas">
+  <form class="cartao" method="post" enctype="multipart/form-data" action="/admin/questoes/<%= criar ? 'nova' : encodeURIComponent(q.codigo) %>" id="form-questao">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+
+    <div class="linha">
+      <div class="campo">
+        <label for="codigo">Código</label>
+        <% if (criar) { %>
+          <input id="codigo" type="text" name="codigo" value="<%= q.codigo %>" placeholder="automático (ex.: UEM-MAT2-ADM-001)">
+        <% } else { %>
+          <input id="codigo" type="text" value="<%= q.codigo %>" disabled>
+        <% } %>
+      </div>
+      <div class="campo">
+        <label for="estado">Estado</label>
+        <select id="estado" name="estado">
+          <% for (const e of estados) { %><option value="<%= e %>" <%= q.estado === e ? 'selected' : '' %>><%= LABEL_ESTADO[e] %></option><% } %>
+        </select>
+      </div>
+    </div>
+
+    <div class="linha">
+      <div class="campo">
+        <label for="prova">Prova *</label>
+        <select id="prova" name="prova" required>
+          <option value="">—</option>
+          <% for (const p of provas) { %><option value="<%= p.codigo %>" data-disciplina="<%= p.disciplina %>" <%= q.prova === p.codigo ? 'selected' : '' %>><%= p.codigo %> — <%= p.nome %></option><% } %>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="nivel">Nível</label>
+        <select id="nivel" name="nivel">
+          <option value="">— sem nível —</option>
+          <% for (const n of niveis) { %><option value="<%= n %>" <%= q.nivel === String(n) ? 'selected' : '' %>><%= n %></option><% } %>
+        </select>
+      </div>
+    </div>
+    <% if (typeof outras !== 'undefined' && outras.length) { %>
+      <p class="mute">Também usada em: <% for (const o of outras) { %><code><%= o.prova %><%= o.nivel ? ' · N' + o.nivel : '' %></code> <% } %></p>
+    <% } %>
+
+    <div class="linha">
+      <div class="campo">
+        <label for="tema">Tema</label>
+        <select id="tema" name="tema">
+          <option value="">—</option>
+          <% for (const t of temas) { %><option value="<%= t.codigo %>" data-disciplina="<%= t.disciplina %>" <%= q.tema === t.codigo ? 'selected' : '' %>><%= t.nome %></option><% } %>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="tipo">Tipo</label>
+        <select id="tipo" name="tipo">
+          <option value="escolha_multipla" <%= q.tipo === 'escolha_multipla' ? 'selected' : '' %>>Escolha múltipla</option>
+          <option value="verdadeiro_falso" <%= q.tipo === 'verdadeiro_falso' ? 'selected' : '' %>>Verdadeiro / Falso</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="dificuldade">Dificuldade</label>
+        <select id="dificuldade" name="dificuldade">
+          <option value="">—</option>
+          <% for (const d of [1,2,3,4,5]) { %><option value="<%= d %>" <%= q.dificuldade === String(d) ? 'selected' : '' %>><%= d %></option><% } %>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="ano">Ano</label>
+        <input id="ano" type="text" name="ano" value="<%= q.ano %>" inputmode="numeric" maxlength="4">
+      </div>
+    </div>
+
+    <div class="campo">
+      <label for="enunciado">Enunciado *</label>
+      <textarea id="enunciado" name="enunciado" rows="4" data-previa required><%= q.enunciado %></textarea>
+      <div class="ajuda">Fórmulas em LaTeX: <code>$x^2$</code> em linha, <code>$$\frac{a}{b}$$</code> em bloco.</div>
+    </div>
+
+    <div class="campo">
+      <label>Imagens do enunciado</label>
+      <% if (q.imagens.length) { %>
+      <div class="imagens">
+        <% for (const img of q.imagens) { %>
+          <figure>
+            <img src="/admin/media/<%= encodeURIComponent(img) %>" alt="<%= img %>">
+            <label class="check"><input type="checkbox" name="remover_imagens" value="<%= img %>"> remover</label>
+          </figure>
+        <% } %>
+      </div>
+      <% } %>
+      <input type="file" name="imagem" accept="image/png,image/jpeg,image/webp" id="imagem">
+      <div class="ajuda">PNG, JPG ou WebP até 2 MB. Prefere imagens com menos de 300 KB (a app é leve).</div>
+    </div>
+
+    <div id="bloco-em" class="<%= q.tipo === 'verdadeiro_falso' ? 'oculto' : '' %>">
+      <label>Alternativas (4; a 5.ª é opcional) — marca a correcta</label>
+      <% q.alternativas.forEach((a, i) => { %>
+        <div class="alternativa">
+          <div class="letra"><%= a.letra %></div>
+          <div>
+            <input type="text" name="alternativas[<%= i %>][texto]" value="<%= a.texto %>" data-previa data-letra="<%= a.letra %>" placeholder="<%= i === 4 ? 'Opcional' : '' %>">
+            <% if (a.imagem) { %><div class="imagens" style="margin-top:6px"><figure><img src="/admin/media/<%= encodeURIComponent(a.imagem) %>" alt="<%= a.imagem %>"></figure></div><% } %>
+            <label class="correcta-op"><input type="radio" name="correcta" value="<%= a.letra %>" <%= q.correcta === a.letra ? 'checked' : '' %>> correcta</label>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <div id="bloco-vf" class="campo <%= q.tipo === 'verdadeiro_falso' ? '' : 'oculto' %>">
+      <label>Resposta correcta</label>
+      <label class="check"><input type="radio" name="correcta_vf" value="V" <%= q.correcta === 'V' ? 'checked' : '' %>> Verdadeiro</label>
+      <label class="check"><input type="radio" name="correcta_vf" value="F" <%= q.correcta === 'F' ? 'checked' : '' %>> Falso</label>
+    </div>
+
+    <div class="campo">
+      <label for="dica">Dica (opcional)</label>
+      <textarea id="dica" name="dica" rows="2" data-previa><%= q.dica %></textarea>
+    </div>
+    <div class="campo">
+      <label for="explicacao">Explicação *</label>
+      <textarea id="explicacao" name="explicacao" rows="4" data-previa required><%= q.explicacao %></textarea>
+      <div class="ajuda">Não refiras letras ("a opção B"): as alternativas são baralhadas na app.</div>
+    </div>
+
+    <% if (q.alertas.length) { %>
+      <div class="erros" style="background:#FFFBEB;border-color:#FDE68A;color:#92400E">
+        <strong>Alertas da extracção</strong>
+        <ul><% for (const a of q.alertas) { %><li><%= a %></li><% } %></ul>
+      </div>
+    <% } %>
+    <% if (q.resposta_origem === 'proposta_ia') { %>
+      <p class="mute">Resposta proposta pela IA (confiança: <%= q.resposta_confianca || '—' %>). Confirma antes de publicar.</p>
+    <% } %>
+
+    <div class="accoes" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn">Gravar</button>
+      <% if (criar) { %><button class="btn sec" name="depois" value="nova">Gravar e criar outra</button><% } %>
+      <a class="btn sec" href="/admin/questoes">Cancelar</a>
+    </div>
+  </form>
+
+  <div>
+    <div class="previa cartao">
+      <h2>Pré-visualização</h2>
+      <div class="enunciado" id="p-enunciado"></div>
+      <div id="p-alternativas"></div>
+      <div class="bloco" id="p-dica-wrap"><b>💡 Dica:</b> <span id="p-dica"></span></div>
+      <div class="bloco"><b>Explicação:</b> <span id="p-explicacao"></span></div>
+    </div>
+    <% if (!criar) { %>
+    <form method="post" action="/admin/questoes/<%= encodeURIComponent(q.codigo) %>/apagar" data-confirmar="Apagar a questão <%= q.codigo %>? O código não volta a ser usado.">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <button class="btn perigo pequeno">Apagar questão</button>
+    </form>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/fim') %>

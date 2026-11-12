@@ -1,0 +1,376 @@
+// Modelo de dados do Aprova+.
+//
+// - Chaves de conteúdo em texto, iguais aos códigos dos seeds (ex.: UEM-MAT2-2025-005),
+//   para que backend, app e seeds falem a mesma língua e o progresso sobreviva a actualizações.
+// - Colunas em snake_case, tabelas no plural (iguais ao content.db da app).
+// - Listas (provincias, aliases, imagens, alertas…) guardadas como texto JSON: funciona igual em SQLite e MySQL.
+// - Estados e tipos são texto validado no código (ver src/dominio.ts).
+//
+// Para usar MySQL: provider = "mysql" e acrescentar @db.Text aos campos de texto longo
+// (enunciado, explicacao, texto, dados). Ver README.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────── Catálogo ─────────────────────────────
+
+/// Conjunto de instituições que fazem o mesmo exame (ex.: UEM = UEM + UniZambeze).
+model GrupoExame {
+  codigo       String        @id
+  nome         String
+  tem_gabarito Boolean       @default(false)
+  instituicoes Instituicao[]
+  provas       Prova[]
+
+  @@map("grupos_exame")
+}
+
+model Instituicao {
+  codigo      String     @id
+  sigla       String
+  nome        String
+  grupo_exame String
+  provincias  String     @default("[]")
+  edital_ano  Int?
+  grupo       GrupoExame @relation(fields: [grupo_exame], references: [codigo])
+  ofertas     Oferta[]
+
+  @@map("instituicoes")
+}
+
+model Disciplina {
+  codigo   String    @id
+  nome     String
+  aliases  String    @default("[]")
+  icone    String?
+  temas    Tema[]
+  provas   Prova[]
+  questoes Questao[]
+
+  @@map("disciplinas")
+}
+
+model Tema {
+  codigo     String     @id
+  disciplina String
+  nome       String
+  disc       Disciplina @relation(fields: [disciplina], references: [codigo])
+  questoes   Questao[]
+
+  @@map("temas")
+}
+
+/// Prova = grupo de exame + disciplina (+ variante). Ex.: UEM-MAT2. Serve todas as instituições do grupo.
+model Prova {
+  codigo           String         @id
+  grupo_exame      String
+  disciplina       String
+  variante         String?
+  tipo             String         @default("escrita")
+  nome             String
+  duracao_min      Int?
+  num_questoes     Int?
+  num_alternativas Int?
+  nota             String?
+  grupo            GrupoExame     @relation(fields: [grupo_exame], references: [codigo])
+  disc             Disciplina     @relation(fields: [disciplina], references: [codigo])
+  niveis           Nivel[]
+  questoes         QuestaoProva[]
+  ofertas          OfertaProva[]
+  simulados        Simulado[]
+  produtos         ProdutoProva[]
+  pacotes          Pacote[]
+
+  @@map("provas")
+}
+
+/// Curso genérico (ex.: Engenharia Informática), independente da instituição.
+model Curso {
+  codigo  String   @id
+  nome    String
+  icone   String?
+  ofertas Oferta[]
+
+  @@map("cursos")
+}
+
+/// Oferta = curso numa instituição concreta (vem de cursos.json dos seeds; o código é o mesmo).
+model Oferta {
+  codigo         String        @id
+  slug           String        @unique
+  curso          String
+  instituicao    String
+  nome_original  String
+  faculdade      String        @default("")
+  locais         String        @default("[]")
+  regimes        String        @default("[]")
+  modelo_exame   String?
+  vagas          String        @default("[]")
+  fonte_ficheiro String?
+  fonte_pagina   Int?
+  cur            Curso         @relation(fields: [curso], references: [codigo])
+  inst           Instituicao   @relation(fields: [instituicao], references: [codigo])
+  provas         OfertaProva[]
+  simulados      Simulado[]
+
+  @@map("ofertas")
+}
+
+model OfertaProva {
+  oferta String
+  prova  String
+  peso   Int?
+  ordem  Int    @default(0)
+  of     Oferta @relation(fields: [oferta], references: [codigo], onDelete: Cascade)
+  pr     Prova  @relation(fields: [prova], references: [codigo])
+
+  @@id([oferta, prova])
+  @@map("oferta_prova")
+}
+
+model Nivel {
+  prova       String
+  numero      Int
+  titulo      String
+  descricao   String?
+  /// NULL = usar a nota mínima padrão (NOTA_MINIMA_PADRAO).
+  nota_minima Int?
+  pr          Prova   @relation(fields: [prova], references: [codigo], onDelete: Cascade)
+
+  @@id([prova, numero])
+  @@map("niveis")
+}
+
+// ───────────────────────────── Questões ─────────────────────────────
+
+/// Texto de leitura partilhado por várias questões (ex.: compreensão de texto em Português).
+model TextoBase {
+  codigo   String    @id
+  titulo   String?
+  texto    String
+  fonte    String?
+  questoes Questao[]
+
+  @@map("textos_base")
+}
+
+model Questao {
+  codigo             String         @id
+  disciplina         String
+  tema               String?
+  texto_base         String?
+  /// escolha_multipla | verdadeiro_falso
+  tipo               String
+  enunciado          String
+  /// JSON: lista de nomes de ficheiro em storage/imagens
+  imagens            String         @default("[]")
+  dica               String?
+  explicacao         String
+  /// proposta_ia | humana | null
+  explicacao_origem  String?
+  explicacao_revista Boolean        @default(false)
+  /// gabarito_oficial | proposta_ia | null
+  resposta_origem    String?
+  /// alta | media | baixa | null (só para proposta_ia)
+  resposta_confianca String?
+  dificuldade        Int?
+  ano                Int?
+  variante           String?
+  numero_original    Int?
+  fonte_ficheiro     String?
+  fonte_pagina       Int?
+  /// rascunho | revista | publicada
+  estado             String         @default("rascunho")
+  /// JSON: lista de alertas para revisão humana
+  alertas            String         @default("[]")
+  criado_em          DateTime       @default(now())
+  actualizado_em     DateTime       @updatedAt
+  disc               Disciplina     @relation(fields: [disciplina], references: [codigo])
+  tem                Tema?          @relation(fields: [tema], references: [codigo])
+  texto              TextoBase?     @relation(fields: [texto_base], references: [codigo])
+  alternativas       Alternativa[]
+  provas             QuestaoProva[]
+
+  @@index([estado])
+  @@map("questoes")
+}
+
+/// Liga a questão a uma prova e a um nível (uma questão pode servir várias provas).
+model QuestaoProva {
+  questao String
+  prova   String
+  nivel   Int?
+  q       Questao @relation(fields: [questao], references: [codigo], onDelete: Cascade)
+  pr      Prova   @relation(fields: [prova], references: [codigo])
+
+  @@id([questao, prova])
+  @@index([prova, nivel])
+  @@map("questao_prova")
+}
+
+model Alternativa {
+  id       Int     @id @default(autoincrement())
+  questao  String
+  /// A–E em escolha múltipla; V/F em verdadeiro/falso.
+  letra    String
+  texto    String?
+  imagem   String?
+  correcta Boolean @default(false)
+  ordem    Int
+  q        Questao @relation(fields: [questao], references: [codigo], onDelete: Cascade)
+
+  @@unique([questao, letra])
+  @@map("alternativas")
+}
+
+model Simulado {
+  codigo        String  @id
+  /// prova preenchida = simulado da disciplina; oferta preenchida = simulado completo do curso
+  prova         String?
+  oferta        String?
+  titulo        String
+  duracao_min   Int
+  num_perguntas Int
+  gratuito      Boolean @default(false)
+  pr            Prova?  @relation(fields: [prova], references: [codigo])
+  of            Oferta? @relation(fields: [oferta], references: [codigo])
+
+  @@map("simulados")
+}
+
+// ───────────────────────────── Loja ─────────────────────────────
+
+model Produto {
+  codigo    String            @id
+  nome      String
+  descricao String?
+  /// niveis | simulados
+  tipo      String
+  preco_mt  Int
+  epoca     String?
+  ordem     Int               @default(0)
+  activo    Boolean           @default(true)
+  provas    ProdutoProva[]
+  codigos   CodigoActivacao[]
+  licencas  Licenca[]
+
+  @@map("produtos")
+}
+
+model ProdutoProva {
+  produto String
+  prova   String
+  prod    Produto @relation(fields: [produto], references: [codigo], onDelete: Cascade)
+  pr      Prova   @relation(fields: [prova], references: [codigo])
+
+  @@id([produto, prova])
+  @@map("produto_prova")
+}
+
+// ───────────────────────────── Pessoas ─────────────────────────────
+
+model Admin {
+  id            Int               @id @default(autoincrement())
+  email         String            @unique
+  nome          String?
+  password_hash String
+  /// admin (único papel por agora)
+  papel         String            @default("admin")
+  activo        Boolean           @default(true)
+  criado_em     DateTime          @default(now())
+  ultimo_login  DateTime?
+  codigos       CodigoActivacao[]
+
+  @@map("admins")
+}
+
+model Estudante {
+  id        String            @id @default(uuid())
+  nome      String?
+  telefone  String?
+  criado_em DateTime          @default(now())
+  codigos   CodigoActivacao[]
+  licencas  Licenca[]
+
+  @@index([telefone])
+  @@map("estudantes")
+}
+
+// ─────────────── Activação e pacotes (funcionalidade na Etapa 3) ───────────────
+
+model CodigoActivacao {
+  id                     Int        @id @default(autoincrement())
+  /// SHA-256(código + pepper). O código em claro só aparece no momento da geração.
+  codigo_hash            String     @unique
+  /// Últimos caracteres, para o admin identificar o código (ex.: APV-••••-K7QX).
+  codigo_final           String
+  produto                String
+  /// disponivel | usado | revogado
+  estado                 String     @default("disponivel")
+  validade_ate           DateTime?
+  criado_por             Int?
+  criado_em              DateTime   @default(now())
+  usado_por_estudante_id String?
+  usado_em               DateTime?
+  dispositivo_id         String?
+  nota                   String?
+  prod                   Produto    @relation(fields: [produto], references: [codigo])
+  admin                  Admin?     @relation(fields: [criado_por], references: [id])
+  estudante              Estudante? @relation(fields: [usado_por_estudante_id], references: [id])
+  licencas               Licenca[]
+
+  @@index([estado])
+  @@map("codigos_activacao")
+}
+
+model Licenca {
+  id         String           @id @default(uuid())
+  estudante  String
+  produto    String
+  codigo_id  Int?
+  valido_ate DateTime?
+  /// JSON canónico assinado (Ed25519)
+  conteudo   String
+  assinatura String
+  revogada   Boolean          @default(false)
+  criada_em  DateTime         @default(now())
+  est        Estudante        @relation(fields: [estudante], references: [id])
+  prod       Produto          @relation(fields: [produto], references: [codigo])
+  cod        CodigoActivacao? @relation(fields: [codigo_id], references: [id])
+
+  @@map("licencas")
+}
+
+/// Versão publicada do pacote pago de uma prova (níveis 3–10 + simulados).
+model Pacote {
+  id            Int      @id @default(autoincrement())
+  prova         String
+  versao        Int
+  ficheiro      String
+  sha256        String
+  tamanho_bytes Int
+  num_questoes  Int
+  publicado_em  DateTime @default(now())
+  publicado_por Int?
+  pr            Prova    @relation(fields: [prova], references: [codigo])
+
+  @@unique([prova, versao])
+  @@map("pacotes")
+}
+
+// ───────────────────────────── Sistema ─────────────────────────────
+
+model Sessao {
+  sid    String   @id
+  dados  String
+  expira DateTime
+
+  @@index([expira])
+  @@map("sessoes")
+}

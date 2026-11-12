@@ -1,0 +1,8 @@
+<% if (tabs) { %>
+<div class="abas">
+  <% for (const t of tabs) { %>
+    <a href="/admin/catalogo/<%= t.chave %>" class="<%= caminho.startsWith('/admin/catalogo/' + t.chave) ? 'activo' : '' %>"><%= t.titulo %></a>
+  <% } %>
+  <a href="/admin/catalogo/niveis" class="<%= caminho.startsWith('/admin/catalogo/niveis') ? 'activo' : '' %>">Níveis</a>
+</div>
+<% } %>
